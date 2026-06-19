@@ -2,16 +2,16 @@
 
 <workspace>
 	<settings>
-		<label>retailclass</label>
+		<label>gold</label>
 	</settings>
 	<users>
 		<user>
-			<path>retailclass.jcu</path>
+			<path>gold.jcu</path>
 		</user>
 	</users>
 	<projects>
 		<project>
-			<path>retailclass.jcp</path>
+			<path>gold.jcp</path>
 		</project>
 	</projects>
 </workspace>

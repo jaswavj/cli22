@@ -2,12 +2,12 @@
 
 <project>
 	<settings>
-		<label>retailclass</label>
+		<label>gold</label>
 		<root_path>\</root_path>
 		<output_path>\</output_path>
 		<source_path>\</source_path>
 		<jdkprofile_ref>JDK version -21</jdkprofile_ref>
-		<compiler_ref>&lt;Default&gt;</compiler_ref>
+		<compiler_ref/>
 		<ant_ref/>
 	</settings>
 	<ant_events/>
@@ -24,7 +24,7 @@
 		</runtime>
 	</runtimes>
 	<libraries>
-		<library_ref>libr</library_ref>
+		<library_ref>lib</library_ref>
 	</libraries>
 	<files>
 		<include>
@@ -36,6 +36,9 @@
 			</folderitem>
 			<folderitem>
 				<path>cheque</path>
+			</folderitem>
+			<folderitem>
+				<path>gold</path>
 			</folderitem>
 			<folderitem>
 				<path>path</path>
@@ -87,6 +90,10 @@
 			<fileitem>
 				<path>cheque\supplierChequeBean.java</path>
 				<folder>cheque</folder>
+			</fileitem>
+			<fileitem>
+				<path>gold\goldBillingBean.java</path>
+				<folder>gold</folder>
 			</fileitem>
 			<fileitem>
 				<path>path\pathBean.java</path>

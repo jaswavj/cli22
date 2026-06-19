@@ -155,6 +155,107 @@ CREATE TABLE `expense_type` (
 
 /*Data for the table `expense_type` */
 
+/*Table structure for table `gold_bill` */
+
+DROP TABLE IF EXISTS `gold_bill`;
+
+CREATE TABLE `gold_bill` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `bill_no` int unsigned NOT NULL DEFAULT '0' COMMENT 'display bill id, set in application code',
+  `customer_id` int DEFAULT NULL COMMENT 'NULL for walk-in',
+  `customer_name` varchar(255) NOT NULL,
+  `customer_phone` varchar(20) DEFAULT NULL,
+  `id_proof_no` varchar(100) DEFAULT NULL,
+  `addr_proof_no` varchar(100) DEFAULT NULL,
+  `gold_rate` decimal(10,2) NOT NULL,
+  `gross_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `margin` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `net_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `release_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `amount_paid` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `bill_date` date NOT NULL,
+  `bill_time` time NOT NULL,
+  `entered_by` int NOT NULL COMMENT 'user id',
+  `entered_dt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_cancelled` tinyint NOT NULL DEFAULT '0',
+  `cancelled_by` int DEFAULT NULL,
+  `cancelled_dt` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*Data for the table `gold_bill` */
+
+insert  into `gold_bill`(`id`,`bill_no`,`customer_id`,`customer_name`,`customer_phone`,`id_proof_no`,`addr_proof_no`,`gold_rate`,`gross_amount`,`margin`,`net_amount`,`release_amount`,`amount_paid`,`bill_date`,`bill_time`,`entered_by`,`entered_dt`,`is_cancelled`,`cancelled_by`,`cancelled_dt`) values 
+(1,1,1,'JASWA VIJAY','9597451419','5451','5411',5980.00,130603.00,103.00,130500.00,0.00,130500.00,'2026-06-19','23:05:00',1,'2026-06-19 23:07:45',0,NULL,NULL),
+(2,2,1,'JASWA VIJAY','9597451419','2222','2222',5980.00,130603.00,100.00,130503.00,3.00,130500.00,'2026-06-19','23:12:00',1,'2026-06-19 23:12:41',0,NULL,NULL);
+
+/*Table structure for table `gold_bill_item` */
+
+DROP TABLE IF EXISTS `gold_bill_item`;
+
+CREATE TABLE `gold_bill_item` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `bill_id` int unsigned NOT NULL,
+  `ornament_type` varchar(255) NOT NULL,
+  `gross_wt` decimal(10,3) NOT NULL DEFAULT '0.000',
+  `stone_wax` decimal(10,3) NOT NULL DEFAULT '0.000',
+  `net_wt` decimal(10,3) NOT NULL DEFAULT '0.000',
+  `purity` decimal(6,2) NOT NULL DEFAULT '0.00',
+  `gross_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  PRIMARY KEY (`id`),
+  KEY `bill_id` (`bill_id`),
+  CONSTRAINT `fk_gold_bill_item_bill` FOREIGN KEY (`bill_id`) REFERENCES `gold_bill` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*Data for the table `gold_bill_item` */
+
+insert  into `gold_bill_item`(`id`,`bill_id`,`ornament_type`,`gross_wt`,`stone_wax`,`net_wt`,`purity`,`gross_amount`) values 
+(1,1,'neckl',24.000,0.000,24.000,91.00,130603.00),
+(2,2,'ss',24.000,0.000,24.000,91.00,130603.00);
+
+/*Table structure for table `gold_ledger` */
+
+DROP TABLE IF EXISTS `gold_ledger`;
+
+CREATE TABLE `gold_ledger` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` int DEFAULT NULL,
+  `customer_name` varchar(255) NOT NULL,
+  `bill_id` int unsigned DEFAULT NULL,
+  `txn_type` enum('BILL','PAYMENT','OPENING') NOT NULL DEFAULT 'BILL',
+  `opening_balance` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `closing_balance` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `description` varchar(255) DEFAULT NULL,
+  `txn_date` date NOT NULL,
+  `txn_time` time NOT NULL,
+  `entered_by` int NOT NULL,
+  `entered_dt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `customer_id` (`customer_id`),
+  KEY `bill_id` (`bill_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*Data for the table `gold_ledger` */
+
+insert  into `gold_ledger`(`id`,`customer_id`,`customer_name`,`bill_id`,`txn_type`,`opening_balance`,`amount`,`closing_balance`,`description`,`txn_date`,`txn_time`,`entered_by`,`entered_dt`) values 
+(1,1,'JASWA VIJAY',1,'BILL',0.00,130500.00,130500.00,'Gold Bill #1','2026-06-19','23:05:00',1,'2026-06-19 23:07:45'),
+(2,1,'JASWA VIJAY',2,'BILL',0.00,130500.00,130500.00,'Gold Bill #2','2026-06-19','23:12:00',1,'2026-06-19 23:12:41');
+
+/*Table structure for table `gold_rate` */
+
+DROP TABLE IF EXISTS `gold_rate`;
+
+CREATE TABLE `gold_rate` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `rate` decimal(10,2) NOT NULL,
+  `entered_by` int NOT NULL COMMENT 'user id',
+  `entered_dt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*Data for the table `gold_rate` */
+
 /*Table structure for table `gstin` */
 
 DROP TABLE IF EXISTS `gstin`;

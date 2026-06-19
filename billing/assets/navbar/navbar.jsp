@@ -97,6 +97,8 @@ for (int i = 0; i < vecPer.size(); i++) {
       <div class="collapse sidebar-submenu" id="goldMenu">
 
         <a href="<%=request.getContextPath()%>/gold/goldBill/page.jsp" class="sidebar-subitem">Gold Buy Entry</a>
+        <a href="<%=request.getContextPath()%>/gold/report/billReport.jsp" class="sidebar-subitem">Gold Bill Report</a>
+        <a href="<%=request.getContextPath()%>/gold/report/ledgerReport.jsp" class="sidebar-subitem">Gold Ledger Report</a>
       </div>
     </div>
     <% } %>

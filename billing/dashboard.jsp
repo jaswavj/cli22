@@ -101,5 +101,16 @@ for (int i = 0; i < vecPer.size(); i++) {
         <%}%>
         </div>
     </div>
+
+<!-- Opening Balance Modal -->
+<jsp:include page="/gold/goldBill/openingBalanceModal.jsp" />
+
+<script>
+// Check opening balance on dashboard load
+document.addEventListener('DOMContentLoaded', function() {
+    checkOpeningBalance();
+});
+</script>
+
 </body>
 </html>

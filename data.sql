@@ -35,7 +35,7 @@ CREATE TABLE `company_details` (
 /*Data for the table `company_details` */
 
 insert  into `company_details`(`id`,`shop_name`,`address`,`gstin`,`print_type`,`printer_name`,`bank_details`,`barcode_printer`) values 
-(2,'JASXBILL','Address','ASDFFD223SDDDDF',2,'','Bank Details','AP4909');
+(2,'THIRUMALA GOLD BUYERS','HONEST VALUE !!! INSTANT CASH !!! THIRUMALA GOLD PROMISE\r\n\r\n#119/71, GOPAL NAGAR, M.T.H ROAD, PADI, CH-50 PH - 8778630760','33AAZFT0635P1ZF',2,'','Bank Details','AP4909');
 
 /*Table structure for table `configure_bank_details` */
 
@@ -85,13 +85,14 @@ CREATE TABLE `customer_account` (
   `balance` decimal(10,2) NOT NULL DEFAULT '0.00',
   PRIMARY KEY (`id`),
   UNIQUE KEY `customer_id` (`customer_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `customer_account` */
 
 insert  into `customer_account`(`id`,`customer_id`,`advance`,`balance`) values 
 (1,1,0.00,200.00),
-(2,2,0.00,100.00);
+(2,2,0.00,100.00),
+(3,3,0.00,0.00);
 
 /*Table structure for table `customers` */
 
@@ -101,7 +102,7 @@ CREATE TABLE `customers` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `phone_number` varchar(255) DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
+  `address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `date` date DEFAULT NULL,
   `time` time DEFAULT NULL,
   `is_eligible_for_commission` tinyint DEFAULT '1',
@@ -114,13 +115,14 @@ CREATE TABLE `customers` (
   `local` int DEFAULT '1',
   `exchange_point` double(10,3) DEFAULT '0.000',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `customers` */
 
 insert  into `customers`(`id`,`name`,`phone_number`,`address`,`date`,`time`,`is_eligible_for_commission`,`is_active`,`gstin`,`is_gst`,`salesman`,`area`,`credit_limit`,`local`,`exchange_point`) values 
-(1,'JASWA VIJAY','9597451419','','2026-06-10','21:47:48',0,1,'',0,NULL,NULL,0.00,1,0.000),
-(2,'jeb','9898989898','','2026-06-10','22:20:38',0,1,'',0,NULL,NULL,0.00,1,0.000);
+(1,'JASWA VIJAY','9597451419','assaaaaaaaaaaaa\r\n sdddddddddddddddddddddddddddd dsds','2026-06-10','21:47:48',0,1,'',0,NULL,NULL,0.00,1,0.000),
+(2,'jeb','9898989898','no 10, Joseph colony, Thittuvaila,kanyakumari dist, Tamilnadi','2026-06-10','22:20:38',0,1,'',0,NULL,NULL,0.00,1,0.000),
+(3,'assasas','23232332232332','wdsssssssss\r\nsfsfsfsf','2026-06-20','13:52:27',0,1,'',0,NULL,NULL,0.00,1,0.000);
 
 /*Table structure for table `expense_entry` */
 
@@ -138,9 +140,12 @@ CREATE TABLE `expense_entry` (
   `uid` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `type` (`exp_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `expense_entry` */
+
+insert  into `expense_entry`(`id`,`exp_type`,`content`,`amount`,`description`,`exc_date_time`,`entry_date_time`,`is_active`,`uid`) values 
+(1,1,'d',15.00,'dd','2026-06-20 15:41:00','2026-06-20 15:42:00',1,1);
 
 /*Table structure for table `expense_type` */
 
@@ -151,9 +156,12 @@ CREATE TABLE `expense_type` (
   `type` varchar(255) NOT NULL,
   `is_active` int DEFAULT '1',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `expense_type` */
+
+insert  into `expense_type`(`id`,`type`,`is_active`) values 
+(1,'TEA',1);
 
 /*Table structure for table `gold_bill` */
 
@@ -181,13 +189,12 @@ CREATE TABLE `gold_bill` (
   `cancelled_by` int DEFAULT NULL,
   `cancelled_dt` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `gold_bill` */
 
 insert  into `gold_bill`(`id`,`bill_no`,`customer_id`,`customer_name`,`customer_phone`,`id_proof_no`,`addr_proof_no`,`gold_rate`,`gross_amount`,`margin`,`net_amount`,`release_amount`,`amount_paid`,`bill_date`,`bill_time`,`entered_by`,`entered_dt`,`is_cancelled`,`cancelled_by`,`cancelled_dt`) values 
-(1,1,1,'JASWA VIJAY','9597451419','5451','5411',5980.00,130603.00,103.00,130500.00,0.00,130500.00,'2026-06-19','23:05:00',1,'2026-06-19 23:07:45',0,NULL,NULL),
-(2,2,1,'JASWA VIJAY','9597451419','2222','2222',5980.00,130603.00,100.00,130503.00,3.00,130500.00,'2026-06-19','23:12:00',1,'2026-06-19 23:12:41',0,NULL,NULL);
+(1,1,1,'JASWA VIJAY','9597451419','11111111111111','222222222222222',5980.00,212230.00,100.00,212130.00,100.00,212030.00,'2026-06-20','15:36:00',1,'2026-06-20 15:37:22',0,NULL,NULL);
 
 /*Table structure for table `gold_bill_item` */
 
@@ -203,15 +210,14 @@ CREATE TABLE `gold_bill_item` (
   `purity` decimal(6,2) NOT NULL DEFAULT '0.00',
   `gross_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
   PRIMARY KEY (`id`),
-  KEY `bill_id` (`bill_id`),
-  CONSTRAINT `fk_gold_bill_item_bill` FOREIGN KEY (`bill_id`) REFERENCES `gold_bill` (`id`) ON DELETE CASCADE
+  KEY `bill_id` (`bill_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `gold_bill_item` */
 
 insert  into `gold_bill_item`(`id`,`bill_id`,`ornament_type`,`gross_wt`,`stone_wax`,`net_wt`,`purity`,`gross_amount`) values 
-(1,1,'neckl',24.000,0.000,24.000,91.00,130603.00),
-(2,2,'ss',24.000,0.000,24.000,91.00,130603.00);
+(1,1,'neck',21.000,0.000,21.000,91.00,114278.00),
+(2,1,'coi',20.000,1.000,19.000,78.00,97952.00);
 
 /*Table structure for table `gold_ledger` */
 
@@ -231,16 +237,20 @@ CREATE TABLE `gold_ledger` (
   `txn_time` time NOT NULL,
   `entered_by` int NOT NULL,
   `entered_dt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_open_balance_entry` tinyint(1) NOT NULL DEFAULT '0',
+  `is_expense` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `customer_id` (`customer_id`),
-  KEY `bill_id` (`bill_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `bill_id` (`bill_id`),
+  KEY `idx_is_open_balance_entry` (`is_open_balance_entry`,`txn_date`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `gold_ledger` */
 
-insert  into `gold_ledger`(`id`,`customer_id`,`customer_name`,`bill_id`,`txn_type`,`opening_balance`,`amount`,`closing_balance`,`description`,`txn_date`,`txn_time`,`entered_by`,`entered_dt`) values 
-(1,1,'JASWA VIJAY',1,'BILL',0.00,130500.00,130500.00,'Gold Bill #1','2026-06-19','23:05:00',1,'2026-06-19 23:07:45'),
-(2,1,'JASWA VIJAY',2,'BILL',0.00,130500.00,130500.00,'Gold Bill #2','2026-06-19','23:12:00',1,'2026-06-19 23:12:41');
+insert  into `gold_ledger`(`id`,`customer_id`,`customer_name`,`bill_id`,`txn_type`,`opening_balance`,`amount`,`closing_balance`,`description`,`txn_date`,`txn_time`,`entered_by`,`entered_dt`,`is_open_balance_entry`,`is_expense`) values 
+(1,NULL,'OPENING BALANCE',NULL,'OPENING',0.00,500000.00,0.00,'Opening Balance','2026-06-20','15:36:42',1,'2026-06-20 15:36:42',1,0),
+(2,1,'JASWA VIJAY',1,'BILL',0.00,212030.00,212030.00,'Gold Bill #1','2026-06-20','15:36:48',1,'2026-06-20 15:37:22',0,0),
+(3,NULL,'EXPENSE',NULL,'PAYMENT',0.00,15.00,0.00,'d','2026-06-20','15:41:00',1,'2026-06-20 15:42:00',0,0);
 
 /*Table structure for table `gold_rate` */
 
@@ -252,9 +262,12 @@ CREATE TABLE `gold_rate` (
   `entered_by` int NOT NULL COMMENT 'user id',
   `entered_dt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `gold_rate` */
+
+insert  into `gold_rate`(`id`,`rate`,`entered_by`,`entered_dt`) values 
+(1,5980.00,1,'2026-06-20 15:24:08');
 
 /*Table structure for table `gstin` */
 
@@ -351,18 +364,12 @@ CREATE TABLE `user_modules` (
 /*Data for the table `user_modules` */
 
 insert  into `user_modules`(`id`,`module_name`) values 
-(1,'Billing'),
-(2,'Master'),
-(3,'Stock Reports'),
-(4,'User management'),
-(5,'Inventory'),
-(6,'Account Report'),
-(7,'Admin'),
-(8,'Statistics'),
-(10,'Credit Management'),
-(11,'order list'),
-(12,'Expense'),
-(13,'Balance Summary');
+(1,'Gold buy entry'),
+(2,'Gold buy report'),
+(3,'Ledger'),
+(4,'Customer'),
+(5,'Expense'),
+(6,'Admin');
 
 /*Table structure for table `user_permission` */
 
@@ -387,18 +394,7 @@ insert  into `user_permission`(`id`,`module_id`,`uid`,`date`,`time`) values
 (72,3,1,'2025-09-19','11:43:23'),
 (73,4,1,'2025-09-19','11:43:23'),
 (74,5,1,'2025-09-19','11:43:23'),
-(75,6,1,'2025-09-19','11:43:23'),
-(76,7,1,'2025-09-19','11:43:23'),
-(77,8,1,'2025-09-19','11:43:23'),
-(81,8,1,'2025-09-19','11:51:25'),
-(102,10,1,'2026-01-16',NULL),
-(113,11,1,'2026-01-25','17:40:35'),
-(115,1,23,'2026-02-19','12:25:37'),
-(116,12,1,'2026-02-19','12:00:00'),
-(117,1,22,'2026-02-27','11:51:13'),
-(118,12,22,'2026-02-27','11:51:13'),
-(119,1,24,'2026-03-05','17:40:35'),
-(120,13,1,'2026-03-05','17:40:35');
+(75,6,1,'2025-09-19','11:43:23');
 
 /*Table structure for table `user_special_permission` */
 
@@ -430,10 +426,7 @@ CREATE TABLE `users` (
 /*Data for the table `users` */
 
 insert  into `users`(`id`,`user_name`,`password`,`is_active`,`fullName`,`disc_per`) values 
-(1,'admin','aecbf9a63cec1e93327dfc212f31acdb31c4f5d10bedccf8fbb8b042a6f0f39155797bdd04517905ae5d98b69fdc452cdb61b018e10939740ec96f36e133d639',1,'admin',50),
-(22,'demo','3c9909afec25354d551dae21590bb26e38d53f2173b8d3dc3eee4c047e7ab1c1eb8b85103e3be7ba613b31bb5c9c36214dc9f14a42fd7a2fdb84856bca5c44c2',1,'demo',100),
-(23,'hi','3c9909afec25354d551dae21590bb26e38d53f2173b8d3dc3eee4c047e7ab1c1eb8b85103e3be7ba613b31bb5c9c36214dc9f14a42fd7a2fdb84856bca5c44c2',1,'hi',100),
-(24,'saran','3c9909afec25354d551dae21590bb26e38d53f2173b8d3dc3eee4c047e7ab1c1eb8b85103e3be7ba613b31bb5c9c36214dc9f14a42fd7a2fdb84856bca5c44c2',1,'saran',100);
+(1,'admin','aecbf9a63cec1e93327dfc212f31acdb31c4f5d10bedccf8fbb8b042a6f0f39155797bdd04517905ae5d98b69fdc452cdb61b018e10939740ec96f36e133d639',1,'admin',50);
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

@@ -770,6 +770,7 @@ body:not(.login-body) {
 @media (min-width: 769px) {
     body:not(.login-body) {
         padding-left: 260px !important;
+        transition: padding-left 0.3s ease;
     }
     
     body:not(.login-body).sidebar-hidden {

@@ -451,11 +451,15 @@ public void blockExpenseType(int id) throws Exception {
 public void addExpenseEntry(int expenseType, String content, String description, double amount, String expenseDateTime, int userId) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;
+    PreparedStatement psLedger = null;
+    PreparedStatement psLastBal = null;
+    ResultSet rsLastBal = null;
 
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
         con.setAutoCommit(false);
 
+        // Insert into expense_entry table
         String sql = "INSERT INTO expense_entry(exp_type, content, description, amount, exc_date_time, entry_date_time, uid, is_active) VALUES (?, ?, ?, ?, ?, NOW(), ?, 1)";
         pt = con.prepareStatement(sql);
         pt.setInt(1, expenseType);
@@ -472,6 +476,29 @@ public void addExpenseEntry(int expenseType, String content, String description,
             System.out.println("No rows inserted.");
         }
 
+        // Also insert into gold_ledger
+        // No need to calculate opening_balance and closing_balance
+        // They will be calculated dynamically in reports from amount field
+        
+        // Extract date and time from expenseDateTime (format: yyyy-MM-dd HH:mm:ss)
+        String[] dateTimeParts = expenseDateTime.split(" ");
+        String expDate = dateTimeParts[0];
+        String expTime = dateTimeParts.length > 1 ? dateTimeParts[1] : "00:00:00";
+        
+        // Insert ledger entry (use PAYMENT type for expenses)
+        psLedger = con.prepareStatement(
+            "INSERT INTO gold_ledger " +
+            "(customer_id, customer_name, bill_id, txn_type, opening_balance, amount, closing_balance, " +
+            " description, txn_date, txn_time, entered_by, entered_dt) " +
+            "VALUES (NULL, 'EXPENSE', NULL, 'PAYMENT', 0, ?, 0, ?, ?, ?, ?, NOW())");
+        
+        psLedger.setDouble(1, amount);
+        psLedger.setString(2, content);
+        psLedger.setString(3, expDate);
+        psLedger.setString(4, expTime);
+        psLedger.setInt(5, userId);
+        psLedger.executeUpdate();
+
         con.commit();
     } catch (Exception e) {
         if (con != null) {
@@ -480,6 +507,9 @@ public void addExpenseEntry(int expenseType, String content, String description,
         System.err.println("Error inserting expense entry: " + e.getMessage());
         throw e;
     } finally {
+        if (rsLastBal != null) try { rsLastBal.close(); } catch (SQLException e) { }
+        if (psLastBal != null) try { psLastBal.close(); } catch (SQLException e) { }
+        if (psLedger != null) try { psLedger.close(); } catch (SQLException e) { }
         if (pt != null) try { pt.close(); } catch (SQLException e) { }
         if (con != null) try { con.close(); } catch (Exception e) { }
     }

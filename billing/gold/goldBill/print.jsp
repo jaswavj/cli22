@@ -1,7 +1,57 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*, java.text.*" %>
+<%@ page import="java.util.*, java.text.*, java.sql.*, javax.naming.*, javax.sql.*" %>
 <jsp:useBean id="goldBean" class="gold.goldBillingBean" />
 <jsp:useBean id="userBean" class="user.userBean" />
+<%!
+    // Number to Words conversion (Indian numbering system)
+    public String convertToWords(long number) {
+        if (number == 0) return "ZERO";
+        
+        String[] ones = {"", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE"};
+        String[] teens = {"TEN", "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN", "FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN", "NINETEEN"};
+        String[] tens = {"", "", "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY"};
+        
+        StringBuilder words = new StringBuilder();
+        
+        if (number >= 10000000) {
+            long crores = number / 10000000;
+            words.append(convertToWords(crores)).append(" CRORE ");
+            number %= 10000000;
+        }
+        
+        if (number >= 100000) {
+            long lakhs = number / 100000;
+            words.append(convertToWords(lakhs)).append(" LAKH ");
+            number %= 100000;
+        }
+        
+        if (number >= 1000) {
+            long thousands = number / 1000;
+            words.append(convertToWords(thousands)).append(" THOUSAND ");
+            number %= 1000;
+        }
+        
+        if (number >= 100) {
+            long hundreds = number / 100;
+            words.append(ones[(int)hundreds]).append(" HUNDRED ");
+            number %= 100;
+        }
+        
+        if (number >= 20) {
+            words.append(tens[(int)(number / 10)]).append(" ");
+            number %= 10;
+        } else if (number >= 10) {
+            words.append(teens[(int)(number - 10)]).append(" ");
+            number = 0;
+        }
+        
+        if (number > 0) {
+            words.append(ones[(int)number]).append(" ");
+        }
+        
+        return words.toString().trim();
+    }
+%>
 <%
     String idParam = request.getParameter("id");
     if (idParam == null || idParam.trim().isEmpty()) {
@@ -17,30 +67,56 @@
         out.print("Bill not found"); return;
     }
 
-    // bill: [0]id [1]bill_no [2]cust_name [3]cust_phone [4]id_proof [5]addr_proof
-    //       [6]gold_rate [7]gross_amount [8]margin [9]net_amount [10]release [11]amount_paid
-    //       [12]bill_date [13]bill_time [14]entered_dt
     String billNo      = bill.get(1).toString();
-    String custName    = bill.get(2) != null ? bill.get(2).toString() : "-";
-    String custPhone   = bill.get(3) != null ? bill.get(3).toString() : "-";
-    String idProof     = bill.get(4) != null ? bill.get(4).toString() : "";
-    String addrProof   = bill.get(5) != null ? bill.get(5).toString() : "";
-    String goldRate    = bill.get(6).toString();
-    String grossAmt    = bill.get(7).toString();
-    String margin      = bill.get(8).toString();
-    String netAmt      = bill.get(9).toString();
-    String release     = bill.get(10).toString();
-    String amtPaid     = bill.get(11).toString();
-    String billDate    = bill.get(12).toString();
-    String billTime    = bill.get(13).toString();
-    String enteredDt   = bill.get(14).toString();
+    String custId      = bill.get(2) != null ? bill.get(2).toString() : "";
+    String custName    = bill.get(3) != null ? bill.get(3).toString() : "-";
+    String custPhone   = bill.get(4) != null ? bill.get(4).toString() : "-";
+    String idProof     = bill.get(5) != null ? bill.get(5).toString() : "";
+    String addrProof   = bill.get(6) != null ? bill.get(6).toString() : "";
+    String goldRate    = bill.get(7).toString();
+    String grossAmt    = bill.get(8).toString();
+    String margin      = bill.get(9).toString();
+    String netAmt      = bill.get(10).toString();
+    String release     = bill.get(11).toString();
+    String amtPaid     = bill.get(12).toString();
+    String billDate    = bill.get(13).toString();
+    String billTime    = bill.get(14).toString();
+    String enteredDt   = bill.get(15).toString();
+    
+    String formattedCustId = custId.isEmpty() ? "-" : "THIR-" + custId;
 
-    // company: [0]id [1]shop_name [2]address [3]gstin
     String shopName  = comp.size() > 1 ? comp.get(1).toString() : "";
     String shopAddr  = comp.size() > 2 ? comp.get(2).toString() : "";
     String shopGstin = comp.size() > 3 ? comp.get(3).toString() : "";
+    
+    // Fetch customer address from customers table
+    String customerAddress = "-";
+    if (!custId.isEmpty()) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            InitialContext ctx = new InitialContext();
+            DataSource ds = (DataSource) ctx.lookup("java:comp/env/jdbc/golddb");
+            con = ds.getConnection();
+            ps = con.prepareStatement("SELECT address FROM customers WHERE id = ?");
+            ps.setInt(1, Integer.parseInt(custId));
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                customerAddress = rs.getString("address");
+                if (customerAddress == null || customerAddress.trim().isEmpty()) {
+                    customerAddress = "-";
+                }
+            }
+        } catch (Exception e) {
+            customerAddress = "-";
+        } finally {
+            if (rs != null) try { rs.close(); } catch(Exception e) {}
+            if (ps != null) try { ps.close(); } catch(Exception e) {}
+            if (con != null) try { con.close(); } catch(Exception e) {}
+        }
+    }
 
-    // Format numbers Indian style
     DecimalFormat df = new DecimalFormat("##,##,##0.00");
     DecimalFormat df0 = new DecimalFormat("##,##,##0");
     double dGross  = Double.parseDouble(grossAmt);
@@ -49,7 +125,6 @@
     double dRelease = Double.parseDouble(release);
     double dPaid   = Double.parseDouble(amtPaid);
 
-    // Total row accumulators
     double totalGrossWt = 0, totalStoneWax = 0, totalNetWt = 0, totalGrossAmt = 0;
     for (int i = 0; i < items.size(); i++) {
         Vector row = (Vector) items.get(i);
@@ -58,263 +133,649 @@
         totalNetWt    += Double.parseDouble(row.get(3).toString());
         totalGrossAmt += Double.parseDouble(row.get(5).toString());
     }
+    
+    String amountInWords = "RUPEES " + convertToWords((long)dPaid) + " ONLY";
 %>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Gold Bill #<%= billNo %></title>
+<title>Invoice #<%= billNo %> - <%= shopName %></title>
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body {
-        font-family: Arial, Helvetica, sans-serif;
+        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 20px 15px;
+        color: #2d3436;
+    }
+    
+    .bill-container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: #fff;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    /* ═══ PREMIUM HEADER ═══ */
+    .header {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        padding: 20px 30px 15px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%);
+    }
+    
+    .logo-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .logo-img {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+        filter: brightness(1.2) drop-shadow(0 4px 8px rgba(212,175,55,0.4));
+        background: rgba(255,255,255,0.1);
+        padding: 10px;
+        border-radius: 50%;
+        border: 3px solid #d4af37;
+        flex-shrink: 0;
+    }
+    
+    .company-info {
+        text-align: left;
+        position: relative;
+        z-index: 1;
+        flex: 1;
+    }
+    
+    .company-name {
+        font-size: 24px;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        margin-bottom: 6px;
+    }
+    
+    .company-tagline {
+        font-size: 10px;
+        color: #d4af37;
+        letter-spacing: 2px;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+    
+    .company-address {
+        font-size: 9px;
+        color: #dfe6e9;
+        line-height: 1.6;
+    }
+    
+    .company-address strong {
+        color: #d4af37;
+        font-weight: 700;
+    }
+    
+    .gold-line {
+        height: 3px;
+        background: linear-gradient(90deg, transparent 0%, #d4af37 50%, transparent 100%);
+        margin: 6px 0 0;
+    }
+
+    /* ═══ CUSTOMER INFO SECTION ═══ */
+    .customer-section {
+        padding: 8px 30px 15px;
+        background: #fff;
+    }
+    
+    .customer-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0;
+        border: 2px solid #666;
+    }
+    
+    .customer-table td {
+        padding: 8px 12px;
+        border: 1px solid #666;
+        font-size: 9px;
+    }
+    
+    .customer-table .label-col {
+        background: #e8e8e8;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #2d3436;
+        width: 180px;
+    }
+    
+    .customer-table .value-col {
+        background: #fff;
+        font-weight: 600;
+        color: #2d3436;
+    }
+    
+    .customer-table .value-col.gold {
+        color: #d4af37;
+        font-weight: 900;
+        font-size: 11px;
+    }
+    
+    .customer-table .address-row td {
+        font-size: 9px;
+        padding: 10px 12px;
+    }
+    
+
+
+    /* ═══ ITEMS TABLE ═══ */
+    .items-section {
+        padding: 0 30px 20px;
+    }
+    
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .items-table thead {
+        background: #f8f9fa;
+        border-bottom: 2px solid #2d3436;
+    }
+    
+    .items-table th {
+        color: #2d3436;
+        padding: 10px;
+        text-align: center;
+        font-size: 9px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .items-table td {
+        padding: 10px;
+        text-align: center;
+        font-size: 9px;
+        font-weight: 600;
+        border-bottom: 1px solid #e0e0e0;
+        border-right: 1px solid #f0f0f0;
+    }
+    
+    .items-table td:last-child {
+        border-right: none;
+    }
+    
+    .items-table tbody tr {
+        background: #fff;
+        transition: all 0.2s;
+    }
+    
+    .items-table tbody tr:nth-child(even) {
+        background: #f8f9fa;
+    }
+    
+    .items-table tbody tr:hover {
+        background: #fff9e6;
+        transform: scale(1.01);
+    }
+    
+    .items-table .total-row {
+        background: linear-gradient(135deg, #2d3436 0%, #1a1a2e 100%) !important;
+        color: #fff;
+        font-weight: 900;
+        font-size: 10px;
+    }
+    
+    .items-table .total-row td {
+        border: none;
+        padding: 12px 10px;
+        color: #fff;
+    }
+    
+    .items-table .gold-value {
+        color: #d4af37;
+        font-weight: 900;
+    }
+
+    /* ═══ SUMMARY SECTION ═══ */
+    .summary-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 0;
+        border-top: 4px solid #d4af37;
+    }
+    
+    .terms-column {
+        padding: 20px 25px;
+        background: #f8f9fa;
+        border-right: 3px solid #d4af37;
+    }
+    
+    .terms-title {
+        font-size: 10px;
+        font-weight: 900;
+        color: #2d3436;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        color: #d4af37;
+    }
+    
+    .terms-list {
+        font-size: 8px;
+        line-height: 1.4;
+        color: #636e72;
+        padding-left: 12px;
+    }
+    
+    .terms-list li {
+        margin-bottom: 2px;
+    }
+    
+    .terms-tamil {
+        margin-top: 12px;
+        padding-top: 8px;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .terms-tamil-list {
+        font-size: 8px;
+        line-height: 1.5;
+        color: #636e72;
+        padding-left: 12px;
+        font-family: 'Noto Sans Tamil', 'Latha', 'Arial Unicode MS', sans-serif;
+    }
+    
+    .terms-tamil-list li {
+        margin-bottom: 2px;
+    }
+    
+    .summary-column {
+        background: linear-gradient(135deg, #2d3436 0%, #1a1a2e 100%);
+        padding: 20px 25px;
+    }
+    
+    .summary-table {
+        width: 100%;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        font-size: 10px;
+    }
+    
+    .summary-label {
+        color: #dfe6e9;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 9px;
+    }
+    
+    .summary-value {
+        color: #fff;
+        font-weight: 700;
+        font-size: 11px;
+    }
+    
+    .summary-row.grand-total {
+        border-top: 3px solid #d4af37;
+        border-bottom: 3px solid #d4af37;
+        padding: 12px 0;
+        margin-top: 8px;
+    }
+    
+    .summary-row.grand-total .summary-label {
+        font-size: 12px;
+        font-weight: 900;
+        color: #d4af37;
+        letter-spacing: 1.5px;
+    }
+    
+    .summary-row.grand-total .summary-value {
+        font-size: 14px;
+        font-weight: 900;
+        color: #d4af37;
+    }
+
+    /* ═══ AMOUNT IN WORDS ═══ */
+    .amount-words {
+        padding: 12px 30px;
+        background: #fff;
+        text-align: left;
+        border-top: 2px solid #666;
+        font-size: 10px;
+        font-weight: 700;
+        color: #2d3436;
+    }
+    
+    .amount-words-label {
+        font-size: 8px;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+        font-weight: 600;
+    }
+    
+    .amount-words-value {
         font-size: 11px;
         color: #000;
-        background: #fff;
-        padding: 10px;
-    }
-    .bill-wrap {
-        max-width: 750px;
-        margin: 0 auto;
-        border: 1.5px solid #000;
-        padding: 10px 14px;
-    }
-
-    /* ── Header ── */
-    .hdr { text-align: center; border-bottom: 1.5px solid #000; padding-bottom: 8px; margin-bottom: 6px; }
-    .hdr .shop-name { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
-    .hdr .branch    { font-size: 10px; margin-top: 3px; }
-    .hdr .address   { font-size: 9.5px; margin-top: 2px; color: #333; }
-
-    /* ── Customer info grid ── */
-    .info-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-    .info-table td { padding: 4px 6px; border: 1px solid #000; font-size: 10.5px; vertical-align: top; }
-    .info-table .lbl { font-weight: 700; width: 110px; background: #f5f5f5; white-space: nowrap; }
-
-    /* ── Billing table ── */
-    .bil-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    .bil-table th {
-        background: #222;
-        color: #fff;
-        padding: 5px 6px;
-        font-size: 10px;
+        font-weight: 900;
         text-transform: uppercase;
-        letter-spacing: 0.4px;
-        border: 1px solid #000;
-        text-align: center;
+        letter-spacing: 0.5px;
     }
-    .bil-table td {
-        padding: 5px 6px;
-        border: 1px solid #000;
-        text-align: center;
-        font-size: 10.5px;
+
+    /* ═══ SIGNATURE SECTION ═══ */
+    .signature-section {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        border-top: 3px solid #d4af37;
     }
-    .bil-table td.left { text-align: left; }
-    .bil-table td.right { text-align: right; font-weight: 700; }
-    .bil-table tr.total-row td { font-weight: 800; background: #f5f5f5; }
+    
+    .signature-box {
+        padding: 25px 15px;
+        text-align: center;
+        border-right: 2px solid #e0e0e0;
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+    
+    .signature-box:last-child {
+        border-right: none;
+    }
+    
+    .signature-label {
+        font-size: 9px;
+        font-weight: 900;
+        color: #2d3436;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-top: 2px solid #2d3436;
+        padding-top: 8px;
+        margin-top: 30px;
+    }
 
-    /* ── Summary + T&C two-col layout ── */
-    .bottom-wrap { display: flex; gap: 0; margin-top: 0; border: 1px solid #000; border-top: none; }
-    .tc-col { flex: 1; border-right: 1px solid #000; padding: 8px; }
-    .summary-col { width: 210px; flex-shrink: 0; }
-    .summary-table { width: 100%; border-collapse: collapse; }
-    .summary-table td { padding: 5px 8px; border: 1px solid #000; font-size: 10.5px; }
-    .summary-table .slbl { font-weight: 700; background: #f5f5f5; border-right: 1px solid #000; }
-    .summary-table .sval { text-align: right; font-weight: 700; }
-    .summary-table .paid-row td { background: #222; color: #fff; font-size: 11px; }
+    /* ═══ FOOTER ═══ */
+    .footer {
+        background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+        padding: 10px 30px;
+        text-align: center;
+        color: #dfe6e9;
+        font-size: 8px;
+    }
+    
+    .footer strong {
+        color: #d4af37;
+    }
 
-    /* ── T&C ── */
-    .tc-title { font-weight: 800; font-size: 10.5px; text-align: center; margin-bottom: 5px; }
-    .tc-list  { padding-left: 14px; font-size: 9px; color: #333; line-height: 1.6; }
-    .tc-tamil { font-size: 9px; color: #333; line-height: 1.6; margin-top: 4px; }
-
-    /* ── Thumb + Signature ── */
-    .sig-row { display: flex; border-top: 1px solid #000; }
-    .sig-cell { flex: 1; text-align: center; padding: 10px 8px 6px; font-size: 10px; font-weight: 700; border-right: 1px solid #000; }
-    .sig-cell:last-child { border-right: none; }
-    .sig-line { border-top: 1px solid #555; margin-top: 28px; width: 80%; margin-left: auto; margin-right: auto; }
-
-    /* ── Words row ── */
-    .words-row { border-top: 1px solid #000; padding: 5px 8px; font-size: 10px; font-weight: 700; text-align: center; }
+    /* ═══ PRINT BUTTON ═══ */
+    .print-button {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: linear-gradient(135deg, #d4af37 0%, #f39c12 100%);
+        color: #000;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(212,175,55,0.4);
+        transition: all 0.3s;
+        z-index: 1000;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    
+    .print-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(212,175,55,0.6);
+    }
 
     @media print {
-        body { padding: 0; }
-        .bill-wrap { border: none; }
-        .no-print { display: none; }
+        body {
+            background: white;
+            padding: 0;
+        }
+        .bill-container {
+            box-shadow: none;
+            border-radius: 0;
+            max-width: 100%;
+        }
+        .print-button {
+            display: none;
+        }
     }
 </style>
 </head>
 <body>
 
-<!-- Print button (hidden on print) -->
-<div class="no-print" style="text-align:center; margin-bottom:10px;">
-    <button onclick="window.print()"
-        style="background:#1a2540; color:#fff; border:none; padding:8px 24px; border-radius:6px; font-size:13px; cursor:pointer;">
-        🖨️ Print
-    </button>
-</div>
+<button class="print-button no-print" onclick="window.print()">🖨️ PRINT INVOICE</button>
 
-<div class="bill-wrap">
-
-    <!-- ══ HEADER ══ -->
-    <div class="hdr">
-        <div class="shop-name"><%= shopName %></div>
-        <div class="branch">BRANCH : <%= shopAddr %><% if(!shopGstin.isEmpty()){ %> &nbsp;|&nbsp; GST NO: <%= shopGstin %><% } %></div>
-    </div>
-
-    <!-- ══ CUSTOMER INFO ══ -->
-    <table class="info-table">
-        <tr>
-            <td class="lbl">CUSTOMER NAME</td>
-            <td><%= custName %></td>
-            <td class="lbl">DATE / TIME</td>
-            <td><%= billDate %> <%= billTime %></td>
-        </tr>
-        <tr>
-            <td class="lbl">CONTACT</td>
-            <td><%= custPhone.isEmpty() ? "-" : custPhone %></td>
-            <td class="lbl">BILL ID</td>
-            <td><%= billNo %></td>
-        </tr>
-        <tr>
-            <td class="lbl">ID PROOF</td>
-            <td><%= idProof.isEmpty() ? "-" : idProof %></td>
-            <td class="lbl">GOLD PRICE</td>
-            <td><%= goldRate %></td>
-        </tr>
-        <tr>
-            <td class="lbl">ADDRESS PROOF</td>
-            <td colspan="3"><%= addrProof.isEmpty() ? "-" : addrProof %></td>
-        </tr>
-    </table>
-
-    <!-- ══ BILLING TABLE ══ -->
-    <table class="bil-table">
-        <thead>
-            <tr>
-                <th>Ornament Type</th>
-                <th>Gross Weight</th>
-                <th>Stone / Wax</th>
-                <th>Net Weight</th>
-                <th>Purity</th>
-                <th>Gross Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-<%
-    for (int i = 0; i < items.size(); i++) {
-        Vector row = (Vector) items.get(i);
-        double gw  = Double.parseDouble(row.get(1).toString());
-        double sw  = Double.parseDouble(row.get(2).toString());
-        double nw  = Double.parseDouble(row.get(3).toString());
-        double pur = Double.parseDouble(row.get(4).toString());
-        double ga  = Double.parseDouble(row.get(5).toString());
-%>
-            <tr>
-                <td class="left"><%= row.get(0) %></td>
-                <td><%= new DecimalFormat("0.###").format(gw) %></td>
-                <td><%= new DecimalFormat("0.###").format(sw) %></td>
-                <td><%= new DecimalFormat("0.###").format(nw) %></td>
-                <td><%= new DecimalFormat("0.##").format(pur) %></td>
-                <td class="right"><%= df0.format(ga) %></td>
-            </tr>
-<% } %>
-            <tr class="total-row">
-                <td class="left"><strong>GRAND TOTAL</strong></td>
-                <td><%= new DecimalFormat("0.###").format(totalGrossWt) %></td>
-                <td><%= new DecimalFormat("0.###").format(totalStoneWax) %></td>
-                <td><%= new DecimalFormat("0.###").format(totalNetWt) %></td>
-                <td></td>
-                <td class="right"><%= df0.format(totalGrossAmt) %></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <!-- ══ T&C + SUMMARY ══ -->
-    <div class="bottom-wrap">
-        <!-- Terms & Conditions -->
-        <div class="tc-col">
-            <div class="tc-title">TERMS &amp; CONDITIONS</div>
-            <ol class="tc-list">
-                <li>Ornaments once purchased shall not be returned under any circumstances.</li>
-                <li>If any losses are arising out of this purchase, then you are liable to settle full amount.</li>
-                <li>Selling stolen gold, silver or fake gold is a criminal offence, if found will be reported to authorities.</li>
-                <li>Ornaments were purchased from you based on the declaration that you hold the ownership and saleable title on the ornaments and you completely agree to indemnify against any further claim.</li>
-                <li>Kindly ensure the correctness of cash before leaving the counter. No claims for shortfall will be entertained thereafter.</li>
-            </ol>
-            <div class="tc-tamil" style="margin-top:6px; font-weight:700; text-align:center;">விதிமுறை மற்றும் நிபந்தனைகள்</div>
-            <ol class="tc-tamil" style="padding-left:14px;">
-                <li>ஒருமுறை வாங்கிய ஆபரணங்களை எந்தவொரு சூழ்நிலையிலும் திரும்ப கொடுக்கப்படாது.</li>
-                <li>இந்த வாங்குதலில் ஏதேனும் இழப்புகள் ஏற்பட்டால் நீங்கள் முழுத்தொகையை செலுத்த வேண்டும்.</li>
-                <li>திருடப்பட்ட தங்கம் விற்பது சட்ட விரோதம்.</li>
-            </ol>
-            <!-- Thumb + Signature -->
-            <div class="sig-row" style="margin-top:10px; border:none;">
-                <div class="sig-cell" style="border-right:1px solid #000;">
-                    <div style="height:40px;"></div>
-                    <div class="sig-line"></div>
-                    THUMB IMPRESSION
-                </div>
-                <div class="sig-cell">
-                    <div style="height:40px;"></div>
-                    <div class="sig-line"></div>
-                    CUSTOMER SIGNATURE
+<div class="bill-container">
+    
+    <!-- ═══ PREMIUM HEADER ═══ -->
+    <div class="header">
+        <div class="logo-section">
+            <img src="logo.jpeg" alt="Logo" class="logo-img">
+            <div class="company-info">
+                <div class="company-name"><%= shopName %></div>
+                <div class="company-tagline">GOLD BUYERS & TRADERS</div>
+                <div class="company-address">
+                    <%= shopAddr %><br>
+                    <% if(!shopGstin.isEmpty()){ %><strong>GSTIN:</strong> <%= shopGstin %> | <% } %>
+                    <strong>Contact:</strong> 8880300300
                 </div>
             </div>
         </div>
-
-        <!-- Summary -->
-        <div class="summary-col">
-            <table class="summary-table">
+        <div class="gold-line"></div>
+    </div>
+    
+    <!-- ═══ CUSTOMER INFO ═══ -->
+    <div class="customer-section">
+        <table class="customer-table">
+            <tr>
+                <td class="label-col">CUSTOMER ID</td>
+                <td class="value-col gold"><%= formattedCustId %></td>
+                <td class="label-col">DATE / TIME</td>
+                <td class="value-col"><%= billDate %> <%= billTime %></td>
+            </tr>
+            <tr>
+                <td class="label-col">CUSTOMER NAME</td>
+                <td class="value-col"><%= custName %></td>
+                <td class="label-col">BILL ID</td>
+                <td class="value-col"><%= billNo %></td>
+            </tr>
+            <tr>
+                <td class="label-col">CONTACT</td>
+                <td class="value-col"><%= custPhone %></td>
+                <td class="label-col">GOLD PRICE</td>
+                <td class="value-col gold"><%= goldRate %></td>
+            </tr>
+            <tr class="address-row">
+                <td class="label-col">Address</td>
+                <td colspan="3" class="value-col" style="white-space: pre-line;"><%= customerAddress %></td>
+            </tr>
+            <tr>
+                <td class="label-col">ID PROOF</td>
+                <td class="value-col"><%= idProof.isEmpty() ? "-" : idProof %></td>
+                <td class="label-col">ADDRESS PROOF</td>
+                <td class="value-col"><%= addrProof.isEmpty() ? "-" : addrProof %></td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- ═══ ITEMS TABLE ═══ -->
+    <div class="items-section">
+        <table class="items-table">
+            <thead>
                 <tr>
-                    <td class="slbl">GROSS AMOUNT</td>
-                    <td class="sval"><%= df0.format(dGross) %></td>
+                    <th>S.NO</th>
+                    <th>ORNAMENT TYPE</th>
+                    <th>GROSS WT (g)</th>
+                    <th>STONE/WAX (g)</th>
+                    <th>NET WT (g)</th>
+                    <th>PURITY</th>
+                    <th>AMOUNT (₹)</th>
                 </tr>
+            </thead>
+            <tbody>
+                <% 
+                for (int i = 0; i < items.size(); i++) {
+                    Vector row = (Vector) items.get(i);
+                    String ornType = row.get(0).toString();
+                    double gwt = Double.parseDouble(row.get(1).toString());
+                    double swt = Double.parseDouble(row.get(2).toString());
+                    double nwt = Double.parseDouble(row.get(3).toString());
+                    String pur = row.get(4).toString();
+                    double amt = Double.parseDouble(row.get(5).toString());
+                %>
                 <tr>
-                    <td class="slbl">MARGIN</td>
-                    <td class="sval"><%= df0.format(dMargin) %></td>
+                    <td><%= (i+1) %></td>
+                    <td style="text-align:left; padding-left:15px;"><strong><%= ornType %></strong></td>
+                    <td class="gold-value"><%= df.format(gwt) %></td>
+                    <td><%= df.format(swt) %></td>
+                    <td class="gold-value"><%= df.format(nwt) %></td>
+                    <td><%= pur %></td>
+                    <td class="gold-value">₹ <%= df.format(amt) %></td>
                 </tr>
-                <tr>
-                    <td class="slbl">NET AMOUNT</td>
-                    <td class="sval"><%= df0.format(dNet) %></td>
+                <% } %>
+                <tr class="total-row">
+                    <td colspan="2" style="text-align:right; padding-right:15px;">TOTAL</td>
+                    <td class="gold-value"><%= df.format(totalGrossWt) %></td>
+                    <td><%= df.format(totalStoneWax) %></td>
+                    <td class="gold-value"><%= df.format(totalNetWt) %></td>
+                    <td>-</td>
+                    <td class="gold-value">₹ <%= df.format(totalGrossAmt) %></td>
                 </tr>
-                <tr>
-                    <td class="slbl">RELEASE</td>
-                    <td class="sval"><%= dRelease > 0 ? df0.format(dRelease) : "" %></td>
-                </tr>
-                <tr class="paid-row">
-                    <td class="slbl" style="color:#fff;">AMOUNT PAID</td>
-                    <td class="sval" style="color:#fff;"><%= df0.format(dPaid) %></td>
-                </tr>
-            </table>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- ═══ SUMMARY & TERMS ═══ -->
+    <div class="summary-wrapper">
+        <div class="terms-column">
+            <div class="terms-title">Terms & Conditions</div>
+            <ul class="terms-list">
+                <li>All ornaments are subject to verification and purity testing</li>
+                <li>Rates are subject to change based on market conditions</li>
+                <li>Payment made is final and non-refundable</li>
+                <li>Customer must bring valid ID proof for all transactions</li>
+                <li>Stone weight and wastage deducted as per industry standards</li>
+                <li>Disputes, if any, subject to local jurisdiction only</li>
+                <li>Please verify all details before leaving the counter</li>
+            </ul>
+            
+            <div class="terms-tamil">
+                <div class="terms-title">விதிமுறை மற்றும் நிபந்தனைகள்</div>
+                <ul class="terms-tamil-list">
+                    <li>ஒருமுறை வாங்கியே ஆபரணங்களை எந்தகூறிலையிலும் இரும்பக் கொடுக்கபடாது</li>
+                    <li>இந்த வாங்குதலில் ஏதெனும் இழப்புகள் ஏற்பட்டால்,நிங்கள் முழுத்தொளைகையும் செலுத்த வேண்டும்</li>
+                    <li>திருட்பட்ட தங்கம் செல்லி அல்லது போலி தங்க விற்பனை செய்வது சிரிமினல் குற்றமாகும், அது கண்டுபிடிக்கபட்டால் அதிகாரிகளுக்கு தெரிவிக்கபடும்</li>
+                    <li>ஆபரணங்கள் மீதான உரிமை மற்றும் விற்பனை தளைப்பை நீங்கள் வைத்திருக்கிறீர்கள் என்ற அறிவிப்பின் அடிப்பையில் உங்களிடம் ஆபரணங்கள் வாங்கபட்டன</li>
+                    <li>சுவுண்டரை விட்டு வெளியேறும் முன் பணத்தின் சரியான தன்மையை உறுதி செய்து கொள்ளுங்கள்</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="summary-column">
+            <div class="summary-table">
+                <div class="summary-row">
+                    <div class="summary-label">Gross Amount</div>
+                    <div class="summary-value">₹ <%= df.format(dGross) %></div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-label">Margin</div>
+                    <div class="summary-value">₹ <%= df.format(dMargin) %></div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-label">Net Amount</div>
+                    <div class="summary-value">₹ <%= df.format(dNet) %></div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-label">Release Amount</div>
+                    <div class="summary-value">₹ <%= df.format(dRelease) %></div>
+                </div>
+                <div class="summary-row grand-total">
+                    <div class="summary-label">Amount Paid</div>
+                    <div class="summary-value">₹ <%= df.format(dPaid) %></div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- ══ AMOUNT IN WORDS ══ -->
-    <div class="words-row">
-        AMOUNT IN WORDS : <%= amountToWords((long) Math.round(dPaid)) %> ONLY
+    
+    <!-- ═══ AMOUNT IN WORDS ═══ -->
+    <div class="amount-words">
+        <div class="amount-words-label">Amount in Words</div>
+        <div class="amount-words-value">
+            <%= amountInWords %>
+        </div>
     </div>
+    
+    <!-- ═══ SIGNATURES ═══ -->
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-label">Thumb Impression</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-label">Customer Signature</div>
+        </div>
+    </div>
+    
+    <!-- ═══ FOOTER ═══ -->
+    <div class="footer">
+        This is a computer generated invoice | <strong>Thank you for your business!</strong> | For queries: contact@<%= shopName.toLowerCase().replace(" ", "") %>.com
+    </div>
+    
+</div>
 
-</div><!-- /bill-wrap -->
+<script>
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        window.print();
+    }, 500);
+});
 
-<%!
-/* ── Amount to words (Indian system) ── */
-private String amountToWords(long n) {
-    if (n == 0) return "ZERO";
-    String[] ones = {"","ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT","NINE",
-                     "TEN","ELEVEN","TWELVE","THIRTEEN","FOURTEEN","FIFTEEN","SIXTEEN",
-                     "SEVENTEEN","EIGHTEEN","NINETEEN"};
-    String[] tens = {"","","TWENTY","THIRTY","FORTY","FIFTY","SIXTY","SEVENTY","EIGHTY","NINETY"};
-    StringBuilder sb = new StringBuilder();
-    if (n >= 10000000) { sb.append(amountToWords(n / 10000000)).append(" CRORE "); n %= 10000000; }
-    if (n >= 100000)   { sb.append(amountToWords(n / 100000)).append(" LAKH "); n %= 100000; }
-    if (n >= 1000)     { sb.append(amountToWords(n / 1000)).append(" THOUSAND "); n %= 1000; }
-    if (n >= 100)      { sb.append(ones[(int)(n/100)]).append(" HUNDRED "); n %= 100; }
-    if (n >= 20)       { sb.append(tens[(int)(n/10)]); if(n%10!=0) sb.append(" ").append(ones[(int)(n%10)]); sb.append(" "); }
-    else if (n > 0)    { sb.append(ones[(int)n]).append(" "); }
-    return sb.toString().trim();
-}
-%>
+window.addEventListener('afterprint', function() {
+    window.close();
+});
+</script>
 
 </body>
 </html>

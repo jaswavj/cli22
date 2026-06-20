@@ -87,107 +87,75 @@ for (int i = 0; i < vecPer.size(); i++) {
     </a>
   </div>
   
-<% if (permissions.contains(2)) { %>
-    <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#goldMenu">
-        <i class="fas fa-box"></i>
-        <span>Gold</span>
-        <i class="fas fa-chevron-down ms-auto"></i>
-      </a>
-      <div class="collapse sidebar-submenu" id="goldMenu">
-
-        <a href="<%=request.getContextPath()%>/gold/goldBill/page.jsp" class="sidebar-subitem">Gold Buy Entry</a>
-        <a href="<%=request.getContextPath()%>/gold/report/billReport.jsp" class="sidebar-subitem">Gold Bill Report</a>
-        <a href="<%=request.getContextPath()%>/gold/report/ledgerReport.jsp" class="sidebar-subitem">Gold Ledger Report</a>
-      </div>
-    </div>
-    <% } %>
-<% if (permissions.contains(2)) { %>
-    <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#productMenu">
-        <i class="fas fa-box"></i>
-        <span>Master</span>
-        <i class="fas fa-chevron-down ms-auto"></i>
-      </a>
-      <div class="collapse sidebar-submenu" id="productMenu">
-        <a href="<%=request.getContextPath()%>/product/master/customer/page.jsp" class="sidebar-subitem">Customers</a>
-        
-        </div>
-    </div>
-    <% } %>
-<% if (permissions.contains(5)) { %>
-    <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#inventoryMenu">
-        <i class="fas fa-warehouse"></i>
-        <span>Inventory</span>
-        <i class="fas fa-chevron-down ms-auto"></i>
-      </a>
-      <div class="collapse sidebar-submenu" id="inventoryMenu">
-        <a href="<%=request.getContextPath()%>/product/master/supplier/page.jsp" class="sidebar-subitem">Supplier</a>
-        </div>
-    </div>
-    <% } %>
-
   <div class="sidebar-menu">
-    
-
-    <% if (permissions.contains(3)) { %>
-    <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#stockReportMenu">
-        <i class="fas fa-chart-bar"></i>
-        <span>Stock Reports</span>
-        <i class="fas fa-chevron-down ms-auto"></i>
-      </a>
-      <div class="collapse sidebar-submenu" id="stockReportMenu">
-        <a href="<%=request.getContextPath()%>/reports/currentStock/page1.jsp" class="sidebar-subitem">Current Stock</a>
-      </div>
-    </div>
-    <% } %>
-    
-
-    
-
-    
-    
-    <% if (permissions.contains(4)) { %>
-    <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#adminMenu">
-        <i class="fas fa-user-shield"></i>
-        <span>User Management</span>
-        <i class="fas fa-chevron-down ms-auto"></i>
-      </a>
-      <div class="collapse sidebar-submenu" id="adminMenu">
-        <a href="<%=request.getContextPath()%>/admin/userCreate/page.jsp" class="sidebar-subitem">Create User</a>
-        <a href="<%=request.getContextPath()%>/admin/permission/page.jsp" class="sidebar-subitem">Module Permission</a>
-        <a href="<%=request.getContextPath()%>/admin/changePassword/changePassword.jsp" class="sidebar-subitem">Change Password</a>
-      </div>
-    </div>
+    <!-- Permission 1-4: Gold and Master items as main menu -->
+    <% if (permissions.contains(2)) { %>
+    <a href="<%=request.getContextPath()%>/gold/goldBill/page.jsp" class="sidebar-item">
+      <i class="fas fa-coins"></i>
+      <span>Gold Buy Entry</span>
+    </a>
     <% } %>
 
-    <% if (permissions.contains(7)) { %>
-    <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#adminReportMenu">
-        <i class="fas fa-chart-pie"></i>
-        <span>Admin</span>
-        <i class="fas fa-chevron-down ms-auto"></i>
-      </a>
-      <div class="collapse sidebar-submenu" id="adminReportMenu">
-        <a href="<%=request.getContextPath()%>/admin/companyDetails/page.jsp" class="sidebar-subitem">Company Details</a>
-      </div>
-        </div>
+    <% if (permissions.contains(2)) { %>
+    <a href="<%=request.getContextPath()%>/gold/report/billReport.jsp" class="sidebar-item">
+      <i class="fas fa-file-invoice"></i>
+      <span>Gold Bill Report</span>
+    </a>
+    <% } %>
+
+    <% if (permissions.contains(2)) { %>
+    <a href="<%=request.getContextPath()%>/gold/report/ledgerReport.jsp" class="sidebar-item">
+      <i class="fas fa-book"></i>
+      <span>Gold Ledger Report</span>
+    </a>
+    <% } %>
+
+    <% if (permissions.contains(2)) { %>
+    <a href="<%=request.getContextPath()%>/product/master/customer/page.jsp" class="sidebar-item">
+      <i class="fas fa-users"></i>
+      <span>Customers</span>
+    </a>
+    <% } %>
+
+    <!-- 5: Expense items as main menu -->
+    <% if (permissions.contains(12)) { %>
+    <a href="<%=request.getContextPath()%>/expense/expenseType/expenseType.jsp" class="sidebar-item">
+      <i class="fas fa-tags"></i>
+      <span>Expense Type</span>
+    </a>
     <% } %>
 
     <% if (permissions.contains(12)) { %>
+    <a href="<%=request.getContextPath()%>/expense/expenseEntry/page.jsp" class="sidebar-item">
+      <i class="fas fa-receipt"></i>
+      <span>Expense Entry</span>
+    </a>
+    <% } %>
+
+    <% if (permissions.contains(12)) { %>
+    <a href="<%=request.getContextPath()%>/expense/expenseReport/page.jsp" class="sidebar-item">
+      <i class="fas fa-chart-line"></i>
+      <span>Expense Report</span>
+    </a>
+    <% } %>
+
+    <!-- 6: Admin menu with dropdown (includes User Management + Company Details) -->
+    <% if (permissions.contains(4) || permissions.contains(7)) { %>
     <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#expenseMenu">
-        <i class="fas fa-money-bill-wave"></i>
-        <span>Expense</span>
+      <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#adminMenu">
+        <i class="fas fa-user-shield"></i>
+        <span>Admin</span>
         <i class="fas fa-chevron-down ms-auto"></i>
       </a>
-      <div class="collapse sidebar-submenu" id="expenseMenu">
-        <a href="<%=request.getContextPath()%>/expense/expenseType/expenseType.jsp" class="sidebar-subitem"><i class="fas fa-tags me-2"></i>Expense Type</a>
-        <a href="<%=request.getContextPath()%>/expense/expenseEntry/page.jsp" class="sidebar-subitem"><i class="fas fa-receipt me-2"></i>Expense Entry</a>
-        <a href="<%=request.getContextPath()%>/expense/expenseReport/page.jsp" class="sidebar-subitem"><i class="fas fa-chart-line me-2"></i>Expense Report</a>
+      <div class="collapse sidebar-submenu" id="adminMenu">
+        <% if (permissions.contains(4)) { %>
+        <a href="<%=request.getContextPath()%>/admin/companyDetails/page.jsp" class="sidebar-subitem">Company Details</a>
+        <% } %>
+        <% if (permissions.contains(4)) { %>
+        <a href="<%=request.getContextPath()%>/admin/userCreate/page.jsp" class="sidebar-subitem">Create User</a>
+        <a href="<%=request.getContextPath()%>/admin/permission/page.jsp" class="sidebar-subitem">Module Permission</a>
+        <a href="<%=request.getContextPath()%>/admin/changePassword/changePassword.jsp" class="sidebar-subitem">Change Password</a>
+        <% } %>
       </div>
     </div>
     <% } %>

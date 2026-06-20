@@ -42,7 +42,12 @@ public class goldBillingBean {
             ps.setInt(2, userId);
             ps.executeUpdate();
             rs = ps.getGeneratedKeys();
-            return rs.next() ? rs.getInt(1) : -1;
+            int insertedId = rs.next() ? rs.getInt(1) : -1;
+            con.commit();
+            return insertedId;
+        } catch (Exception e) {
+            if (con != null) try { con.rollback(); } catch (Exception ex) {}
+            throw e;
         } finally {
             if (st != null) try { st.close(); } catch (Exception e) {}
             close(rs, ps, con);
@@ -238,7 +243,7 @@ public class goldBillingBean {
         try {
             con = getConn();
             ps = con.prepareStatement(
-                "SELECT id, bill_no, customer_name, customer_phone, id_proof_no, addr_proof_no, " +
+                "SELECT id, bill_no, customer_id, customer_name, customer_phone, id_proof_no, addr_proof_no, " +
                 "gold_rate, gross_amount, margin, net_amount, release_amount, amount_paid, " +
                 "bill_date, bill_time, entered_dt " +
                 "FROM gold_bill WHERE id = ? AND is_cancelled = 0");
@@ -246,7 +251,7 @@ public class goldBillingBean {
             rs = ps.executeQuery();
             Vector v = new Vector();
             if (rs.next()) {
-                for (int i = 1; i <= 15; i++) v.addElement(rs.getString(i));
+                for (int i = 1; i <= 16; i++) v.addElement(rs.getString(i));
             }
             return v;
         } finally {
@@ -328,7 +333,7 @@ public class goldBillingBean {
             if (fromDate != null && !fromDate.trim().isEmpty()) sql.append("AND txn_date >= ? ");
             if (toDate != null && !toDate.trim().isEmpty())     sql.append("AND txn_date <= ? ");
             if (customerId > 0)                                 sql.append("AND customer_id = ? ");
-            sql.append("ORDER BY txn_date DESC, txn_time DESC, id DESC");
+            sql.append("ORDER BY txn_date ASC, txn_time ASC, id ASC");
 
             ps = con.prepareStatement(sql.toString());
             int idx = 1;
@@ -356,6 +361,39 @@ public class goldBillingBean {
                 rows.addElement(r);
             }
             return rows;
+        } finally {
+            close(rs, ps, con);
+        }
+    }
+
+    /**
+     * Get opening balance sum from gold_ledger where is_open_balance_entry = 1
+     * for the given date range
+     */
+    public double getOpeningBalance(String fromDate, String toDate, int customerId) throws Exception {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            con = getConn();
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT COALESCE(SUM(amount), 0) as total FROM gold_ledger ");
+            sql.append("WHERE is_open_balance_entry = 1 ");
+            if (fromDate != null && !fromDate.trim().isEmpty()) sql.append("AND txn_date >= ? ");
+            if (toDate != null && !toDate.trim().isEmpty())     sql.append("AND txn_date <= ? ");
+            if (customerId > 0)                                 sql.append("AND customer_id = ? ");
+
+            ps = con.prepareStatement(sql.toString());
+            int idx = 1;
+            if (fromDate != null && !fromDate.trim().isEmpty()) ps.setString(idx++, fromDate.trim());
+            if (toDate != null && !toDate.trim().isEmpty())     ps.setString(idx++, toDate.trim());
+            if (customerId > 0)                                 ps.setInt(idx++, customerId);
+
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getDouble("total");
+            }
+            return 0.0;
         } finally {
             close(rs, ps, con);
         }

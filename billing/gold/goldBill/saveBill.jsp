@@ -41,10 +41,7 @@
             items.addElement(row);
         }
 
-        // Ensure gold rate history is captured on bill save too.
-        if (goldRate > 0) {
-            goldBean.insertGoldRate(goldRate, uid);
-        }
+
 
         // ── Save bill ──
         int billId = goldBean.saveBill(
@@ -56,6 +53,7 @@
         if (billId > 0) {
             resp.put("status",  "ok");
             resp.put("bill_id", billId);
+            resp.put("bill_no", billId); // bill_no = id
         } else {
             resp.put("status", "error");
             resp.put("msg",    "Insert failed");

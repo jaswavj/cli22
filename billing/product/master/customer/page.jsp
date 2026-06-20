@@ -17,12 +17,13 @@
         .table td, .table th { vertical-align: middle; }
         .btn-edit, .btn-delete { margin: 0 2px; }
         @media (max-width: 768px) {
-            .container { padding-left: 0.5rem; padding-right: 0.5rem; }
+            .container-fluid { padding-left: 0.5rem; padding-right: 0.5rem; }
+            .col-md-6 { margin-bottom: 1rem; }
         }
     </style>
     
 </head>
-<body onload="document.form.opregInput.focus();">
+<body>
 
     <%@ include file="/assets/navbar/navbar.jsp" %>
     <!-- Top Navbar -->
@@ -45,12 +46,13 @@ String type = request.getParameter("type");
 <% } %>
 
 
-    <div class="container mt-4 mst-page">
-        
-        <!-- Add Customer Form -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 id="formCardTitle" class="mb-3">Add Customer</h5>
+    <div class="container-fluid mt-4 mst-page" style="max-width: 1400px;">
+        <div class="row g-4">
+            <!-- Add/Edit Customer Form - Left Side -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 id="formCardTitle" class="mb-3">Add Customer</h5>
                 <form id="customerForm" action="<%=contextPath%>/product/master/customer/page1.jsp" method="post" class="row g-3">
                     <div class="col-md-6 input-outline">
                         <input type="text" name="custName" id="custnameInput" class="form-control" placeholder="" required><label >Customer Name</label>
@@ -74,19 +76,12 @@ String type = request.getParameter("type");
                         <small id="gstinError" class="text-danger" style="display:none;">GSTIN must be exactly 15 characters</small>
                     </div>
                     
-                    <div class="col-md-6 input-outline">
+                    <div class="col-md-12 input-outline">
                         <textarea name="custAddress" id="custAddressArea" class="form-control" placeholder="Address" rows="3"></textarea>
                     </div>
                     
-                    <div class="col-md-6">
-                        <label style="font-size: 0.85rem; display: block; margin-bottom: 6px;">Eligible for Commission</label>
-                        <div class="form-check form-switch mt-1">
-                            <input class="form-check-input" type="checkbox" id="isEligibleForCommission" name="isEligibleForCommission" value="1" role="switch" style="width: 3em; height: 1.5em; cursor: pointer;">
-                            <label class="form-check-label ms-2" for="isEligibleForCommission" id="commissionToggleLabel">No</label>
-                        </div>
-                    </div>
-                    
                     <div class="col-md-12">
+                        <input type="hidden" name="isEligibleForCommission" value="0">
                         <input type="hidden" name="customerId" id="customerId" value="">
                         <button type="submit" id="submitBtn" class="bb bb-primary">Add Customer</button>
                         <button type="button" id="cancelBtn" class="bb bb-outline ms-2" style="display:none;" onclick="resetFormToAdd()">Cancel</button>
@@ -94,6 +89,69 @@ String type = request.getParameter("type");
                 </form>
             </div>
         </div>
+    </div>
+
+    <!-- Customer List - Right Side -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="mb-3">Customer List</h5>
+                <div class="table-responsive">
+                <table class="table table-hover mb-0 mst-table" style="min-width: 600px;">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Functions</th>
+                            <th>Name</th>
+                            <th>Phone Number</th>
+                            <th>GSTIN</th>
+                            <th>Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <%
+                            
+                            Vector vec = prod.getCustomerDetails();
+                            for (int i = 0; i < vec.size(); i++) {
+                                Vector vec1 = (Vector) vec.get(i); // inner vector (row)
+                                String Name =vec1.elementAt(0).toString();
+                                int id			= Integer.parseInt(vec1.elementAt(1).toString());
+                                String address =vec1.elementAt(2).toString();
+                                String phn =vec1.elementAt(3).toString();
+                                String gstin =vec1.elementAt(4).toString();
+                                String isGstStr =vec1.elementAt(5).toString();
+                                String isEligibleStr =vec1.elementAt(6).toString();
+                                String safeName = Name.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
+                                String safeAddress = address.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", "");
+                                String safeGstin = gstin.replace("'", "\\'");
+                                String safePhn = phn.replace("'", "\\'");
+
+
+                        %>
+                        <tr>
+                            <td><%=i+1%></td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-warning btn-edit" onclick="populateForm(<%=id%>, '<%=safeName%>', '<%=safePhn%>', '<%=safeAddress%>', '<%=safeGstin%>', <%=isGstStr%>, <%=isEligibleStr%>)">Edit</button>
+                                 
+                            </td>
+                            <td><%=Name%></td>
+                            <td><%=phn%></td>
+                            <td><%=gstin%></td>
+                            <td><%=address%></td>
+                        </tr>
+                        <%
+                    }
+                        %>
+                        <%-- Dynamic rows will come here --%>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
 
         <script>
         var contextPath = "<%=contextPath%>";
@@ -109,9 +167,7 @@ String type = request.getParameter("type");
             if (isGst == 1 && gstin !== '-') {
                 document.getElementById('gstinField').value = gstin;
             }
-            var commissionToggle = document.getElementById('isEligibleForCommission');
-            commissionToggle.checked = (isEligibleForCommission == 1);
-            document.getElementById('commissionToggleLabel').textContent = commissionToggle.checked ? 'Yes' : 'No';
+            // Commission removed - default value 0 sent via hidden field
             document.getElementById('customerId').value = id;
             document.getElementById('submitBtn').textContent = 'Update Customer';
             document.getElementById('cancelBtn').style.display = 'inline-block';
@@ -126,7 +182,6 @@ String type = request.getParameter("type");
             document.getElementById('submitBtn').textContent = 'Add Customer';
             document.getElementById('cancelBtn').style.display = 'none';
             document.getElementById('formCardTitle').textContent = 'Add Customer';
-            document.getElementById('commissionToggleLabel').textContent = 'No';
             document.getElementById('gstinField').disabled = true;
             document.getElementById('gstinField').required = false;
             document.getElementById('gstinRequired').style.display = 'none';
@@ -154,11 +209,6 @@ String type = request.getParameter("type");
                 gstinField.style.borderColor = '';
             }
         }
-        
-        // Commission toggle label
-        document.getElementById('isEligibleForCommission').addEventListener('change', function() {
-            document.getElementById('commissionToggleLabel').textContent = this.checked ? 'Yes' : 'No';
-        });
 
         // Real-time GSTIN validation
         document.addEventListener('DOMContentLoaded', function() {
@@ -199,68 +249,27 @@ String type = request.getParameter("type");
                 }
             });
         });
+        
+        // Auto-close sidebar on page load
+        window.addEventListener('load', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                // On mobile: remove 'show' class
+                sidebar.classList.remove('show');
+                // On desktop: add 'hidden' class and adjust body padding
+                if (window.innerWidth > 768) {
+                    sidebar.classList.add('hidden');
+                    document.body.classList.add('sidebar-hidden');
+                }
+            }
+            // Focus on customer name input
+            const custNameInput = document.getElementById('custnameInput');
+            if (custNameInput) {
+                custNameInput.focus();
+            }
+        });
         </script>
 
-        <!-- Customer List Table -->
-        
-        <div class="card">
-            <div class="card-body">
-                <h5 class="mb-3">Customer List</h5>
-                <div class="table-responsive">
-                <table class="table table-hover mb-0 mst-table" style="min-width: 600px;">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Phone Number</th>
-                            <th>GSTIN</th>
-                            <th>Address</th>
-                            <th>Functions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-                        <%
-                            
-                            Vector vec = prod.getCustomerDetails();
-                            for (int i = 0; i < vec.size(); i++) {
-                                Vector vec1 = (Vector) vec.get(i); // inner vector (row)
-                                String Name =vec1.elementAt(0).toString();
-                                int id			= Integer.parseInt(vec1.elementAt(1).toString());
-                                String address =vec1.elementAt(2).toString();
-                                String phn =vec1.elementAt(3).toString();
-                                String gstin =vec1.elementAt(4).toString();
-                                String isGstStr =vec1.elementAt(5).toString();
-                                String isEligibleStr =vec1.elementAt(6).toString();
-                                String safeName = Name.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
-                                String safeAddress = address.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", "");
-                                String safeGstin = gstin.replace("'", "\\'");
-                                String safePhn = phn.replace("'", "\\'");
-
-
-                        %>
-                        <tr>
-                            <td><%=i+1%></td>
-                            <td><%=Name%></td>
-                            <td><%=phn%></td>
-                            <td><%=gstin%></td>
-                            <td><%=address%></td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-outline-warning btn-edit" onclick="populateForm(<%=id%>, '<%=safeName%>', '<%=safePhn%>', '<%=safeAddress%>', '<%=safeGstin%>', <%=isGstStr%>, <%=isEligibleStr%>)">Edit</button>
-                                 
-                            </td>
-                        </tr>
-                        <%
-                    }
-                        %>
-                        <%-- Dynamic rows will come here --%>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
     <!-- Bootstrap JS -->
 <script>
   // Disable right click for the whole document

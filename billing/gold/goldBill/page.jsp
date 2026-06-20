@@ -294,7 +294,7 @@
     <div class="d-flex gap-3 mb-3 align-items-stretch flex-wrap">
 
         <!-- Gold Rate Card (30%) -->
-        <div class="gold-rate-banner flex-shrink-0" id="goldRateCard" style="flex:0 0 28%; min-width:220px; flex-direction:column; align-items:flex-start; gap:10px; cursor:pointer; user-select:none;" title="Click to update gold rate">
+        <div class="gold-rate-banner flex-shrink-0" id="goldRateCard" style="position:relative; flex:0 0 28%; min-width:220px; flex-direction:column; align-items:flex-start; gap:10px; cursor:pointer; user-select:none;" title="Click to update gold rate">
             <div class="gr-label" style="width:100%; justify-content:space-between;">
                 <span><i class="fas fa-coins"></i> Today's Gold Rate</span>
                 <i class="fas fa-pen" style="font-size:0.75rem; color:rgba(255,255,255,0.7);"></i>
@@ -304,12 +304,21 @@
                 <span id="goldRateDisplay" style="color:#fff; font-size:2rem; font-weight:800; letter-spacing:1px;">0.00</span>
             </div>
             <span class="gr-unit">/ gram &nbsp;|&nbsp; Click to update</span>
+            <div id="lastBillNoDisplay" style="width:100%; text-align:center; padding-top:8px; margin-top:8px; border-top:1px solid rgba(255,255,255,0.2); font-size:0.8rem; color:rgba(255,255,255,0.7); display:none;">
+                Last Bill No: <span id="lastBillNo" style="font-weight:800; font-size:1rem; color:#ffe066; letter-spacing:0.5px;">-</span>
+            </div>
             <input type="hidden" id="goldRateInput" value="0">
         </div>
 
         <!-- Customer Details Card (70%) -->
         <div class="gb-section mb-0" style="flex:1 1 0; min-width:0;">
-            <div class="gb-section-title"><i class="fas fa-user-circle me-2"></i>Customer Details</div>
+            <div class="gb-section-title" style="display:flex; align-items:center; justify-content:space-between;">
+                <span><i class="fas fa-user-circle me-2"></i>Customer Details</span>
+                <button type="button" id="btnAddCustomer" onclick="window.open('<%= request.getContextPath() %>/product/master/customer/page.jsp', '_blank', 'width=900,height=600')" 
+                    style="background:linear-gradient(135deg,#1a2540,#1e2d55); color:#fff; border:none; border-radius:0.4rem; padding:5px 12px; font-size:0.7rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+                    <i class="fas fa-user-plus"></i> Add Customer
+                </button>
+            </div>
             <div class="row g-3">
 
                 <!-- Customer Name -->
@@ -333,7 +342,7 @@
 
                 <!-- Bill Time -->
                 <div class="col-md-3 col-sm-6 input-outline">
-                    <input type="time" id="billTime" class="form-control" placeholder=" ">
+                    <input type="text" id="billTime" class="form-control" placeholder="15:38:45" readonly style="background:#f9f7f0;">
                     <label>Bill Time</label>
                 </div>
 
@@ -476,10 +485,21 @@
         var dd   = String(now.getDate()).padStart(2, '0');
         document.getElementById('billDate').value = yyyy + '-' + mm + '-' + dd;
 
+        // Initial time set
+        updateBillTime();
+    })();
+
+    /* ── Update bill time every second ── */
+    function updateBillTime() {
+        var now = new Date();
         var hh = String(now.getHours()).padStart(2, '0');
         var mi = String(now.getMinutes()).padStart(2, '0');
-        document.getElementById('billTime').value = hh + ':' + mi;
-    })();
+        var ss = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('billTime').value = hh + ':' + mi + ':' + ss;
+    }
+    
+    // Update time every second
+    setInterval(updateBillTime, 1000);
 
     /* ── Row management ── */
     var rowCount = 0;
@@ -692,6 +712,20 @@
     }
     loadLatestGoldRate();
 
+    /* ── Load latest bill number on page load ── */
+    function loadLatestBillNo() {
+        fetch('<%= request.getContextPath() %>/gold/goldBill/getLatestBillNo.jsp')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.status === 'ok' && data.bill_no && data.bill_no !== '0') {
+                    document.getElementById('lastBillNo').textContent = data.bill_no;
+                    document.getElementById('lastBillNoDisplay').style.display = 'block';
+                }
+            })
+            .catch(function (e) { console.error('Failed to load last bill no:', e); });
+    }
+    loadLatestBillNo();
+
     /* Allow Enter key in modal input */
     document.getElementById('goldRateModalInput').addEventListener('keydown', function (e) {
         if (e.key === 'Enter') document.getElementById('btnSetGoldRate').click();
@@ -745,6 +779,20 @@
 
     /* ── Save ── */
     document.getElementById('btnSave').addEventListener('click', function () {
+        // Check if opening balance is required
+        if (openingBalanceRequired && !openingBalanceCancelled) {
+            showOpeningBalanceModal(function() {
+                // User cancelled - show warning
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Opening Balance Required',
+                    text: 'Please enter opening balance before saving bills.',
+                    confirmButtonColor: '#c9a227'
+                });
+            });
+            return;
+        }
+        
         if (!validateForm()) return;
 
         /* Collect items */
@@ -779,7 +827,6 @@
         payload.append('amountPaid',    parseAmt('amountPaidDisplay'));
         payload.append('billDate',      document.getElementById('billDate').value);
         payload.append('billTime',      document.getElementById('billTime').value);
-        payload.append('items',         JSON.stringify(itemsArr));
 
         var btn = document.getElementById('btnSave');
         btn.disabled = true;
@@ -793,10 +840,15 @@
         .then(function (data) {
             btn.disabled = false;
             if (data.status === 'ok') {
+                /* Update last bill number display */
+                if (data.bill_no) {
+                    document.getElementById('lastBillNo').textContent = data.bill_no;
+                    document.getElementById('lastBillNoDisplay').style.display = 'block';
+                }
                 Swal.fire({
                     icon: 'success',
                     title: 'Bill Saved!',
-                    text: 'Bill #' + data.bill_id + ' saved successfully.',
+                    text: 'Bill #' + (data.bill_no || data.bill_id) + ' saved successfully.',
                     confirmButtonColor: '#c9a227',
                     confirmButtonText: 'Print Bill'
                 }).then(function (result) {
@@ -848,9 +900,7 @@
                     var mm   = String(now.getMonth() + 1).padStart(2, '0');
                     var dd   = String(now.getDate()).padStart(2, '0');
                     document.getElementById('billDate').value = yyyy + '-' + mm + '-' + dd;
-                    var hh = String(now.getHours()).padStart(2, '0');
-                    var mi = String(now.getMinutes()).padStart(2, '0');
-                    document.getElementById('billTime').value = hh + ':' + mi;
+                    updateBillTime();
                 })();
             }
         });
@@ -935,5 +985,16 @@
 
 })();
 </script>
+
+<!-- Opening Balance Modal -->
+<jsp:include page="openingBalanceModal.jsp" />
+
+<script>
+// Check opening balance on page load
+document.addEventListener('DOMContentLoaded', function() {
+    checkOpeningBalance();
+});
+</script>
+
 </body>
 </html>

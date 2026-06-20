@@ -210,7 +210,7 @@
     }
     
     .company-name {
-        font-size: 24px;
+        font-size: 16px;
         font-weight: 900;
         color: #fff;
         letter-spacing: 2px;
@@ -595,7 +595,7 @@
         <div class="logo-section">
             <img src="logo.jpeg" alt="Logo" class="logo-img">
             <div class="company-info">
-                <div class="company-name"><%= shopName %></div>
+                <div class="company-name"><%= shopName %> <span>திருமலா கோல்டு பையர்ஸ்</span></div>
                 <div class="company-tagline">GOLD BUYERS & TRADERS</div>
                 <div class="company-address">
                     <%= shopAddr %><br>
@@ -687,23 +687,21 @@
         <div class="terms-column">
             <div class="terms-title">Terms & Conditions</div>
             <ul class="terms-list">
-                <li>All ornaments are subject to verification and purity testing</li>
-                <li>Rates are subject to change based on market conditions</li>
-                <li>Payment made is final and non-refundable</li>
-                <li>Customer must bring valid ID proof for all transactions</li>
-                <li>Stone weight and wastage deducted as per industry standards</li>
-                <li>Disputes, if any, subject to local jurisdiction only</li>
-                <li>Please verify all details before leaving the counter</li>
+                <li>Ornaments once purchased shall not be returned under any circumstances.</li>
+                <li>If any losses arise out of this purchase, you shall be liable to pay the full amount.</li>
+                <li>Selling stolen gold, silver, or fake gold is a criminal offence. If detected, it will be reported to the authorities.</li>
+                <li>The ornaments were purchased from you based on your declaration that you hold the ownership and saleable title to the ornaments.</li>
+                <li>Kindly ensure the correctness of the cash before leaving the counter. No claims for any shortage will be entertained thereafter.</li>
             </ul>
             
             <div class="terms-tamil">
-                <div class="terms-title">விதிமுறை மற்றும் நிபந்தனைகள்</div>
+                <div class="terms-title">விதிமுறைகள் மற்றும் நிபந்தனைகள்</div>
                 <ul class="terms-tamil-list">
-                    <li>ஒருமுறை வாங்கியே ஆபரணங்களை எந்தகூறிலையிலும் இரும்பக் கொடுக்கபடாது</li>
-                    <li>இந்த வாங்குதலில் ஏதெனும் இழப்புகள் ஏற்பட்டால்,நிங்கள் முழுத்தொளைகையும் செலுத்த வேண்டும்</li>
-                    <li>திருட்பட்ட தங்கம் செல்லி அல்லது போலி தங்க விற்பனை செய்வது சிரிமினல் குற்றமாகும், அது கண்டுபிடிக்கபட்டால் அதிகாரிகளுக்கு தெரிவிக்கபடும்</li>
-                    <li>ஆபரணங்கள் மீதான உரிமை மற்றும் விற்பனை தளைப்பை நீங்கள் வைத்திருக்கிறீர்கள் என்ற அறிவிப்பின் அடிப்பையில் உங்களிடம் ஆபரணங்கள் வாங்கபட்டன</li>
-                    <li>சுவுண்டரை விட்டு வெளியேறும் முன் பணத்தின் சரியான தன்மையை உறுதி செய்து கொள்ளுங்கள்</li>
+                    <li>ஒருமுறை வாங்கிய ஆபரணங்கள் எந்த சூழ்நிலையிலும் திரும்பக் கொடுக்கப்படாது.</li>
+                    <li>இந்த வாங்குதலில் ஏதேனும் இழப்புகள் ஏற்பட்டால், நீங்கள் முழுத் தொகையையும் செலுத்த வேண்டும்.</li>
+                    <li>திருடப்பட்ட தங்கம், வெள்ளி அல்லது போலி தங்கத்தை விற்பனை செய்வது கிரிமினல் குற்றமாகும். அது கண்டுபிடிக்கப்பட்டால் சம்பந்தப்பட்ட அதிகாரிகளுக்குத் தெரிவிக்கப்படும்.</li>
+                    <li>ஆபரணங்கள் மீதான உரிமை மற்றும் விற்பனை உரிமை உங்களிடம் உள்ளது என்ற அறிவிப்பின் அடிப்படையில், உங்களிடமிருந்து ஆபரணங்கள் வாங்கப்பட்டன.</li>
+                    <li>கவுண்டரை விட்டு வெளியேறும் முன், பணத்தின் சரியான தன்மையை உறுதிசெய்து கொள்ளுங்கள்.</li>
                 </ul>
             </div>
         </div>

@@ -203,7 +203,7 @@
     }
     
     .company-info {
-        text-align: left;
+        text-align: center;
         position: relative;
         z-index: 1;
         flex: 1;
@@ -600,7 +600,7 @@
                 <div class="company-address">
                     <%= shopAddr %><br>
                     <% if(!shopGstin.isEmpty()){ %><strong>GSTIN:</strong> <%= shopGstin %> | <% } %>
-                    <strong>Contact:</strong> 8880300300
+                    <strong>Contact:</strong> 8778630760
                 </div>
             </div>
         </div>
@@ -611,16 +611,10 @@
     <div class="customer-section">
         <table class="customer-table">
             <tr>
-                <td class="label-col">CUSTOMER ID</td>
-                <td class="value-col gold"><%= formattedCustId %></td>
-                <td class="label-col">DATE / TIME</td>
-                <td class="value-col"><%= billDate %> <%= billTime %></td>
-            </tr>
-            <tr>
                 <td class="label-col">CUSTOMER NAME</td>
                 <td class="value-col"><%= custName %></td>
-                <td class="label-col">BILL ID</td>
-                <td class="value-col"><%= billNo %></td>
+                <td class="label-col">DATE / TIME</td>
+                <td class="value-col"><%= billDate %> <%= billTime %></td>
             </tr>
             <tr>
                 <td class="label-col">CONTACT</td>

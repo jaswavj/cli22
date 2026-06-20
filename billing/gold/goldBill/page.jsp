@@ -539,7 +539,7 @@
             var s       = parseFloat(stoneWaxInput.value) || 0;
             var purity  = parseFloat(purityInput.value)   || 0;
             var rate    = parseFloat(document.getElementById('goldRateInput').value) || 0;
-            var amt     = Math.round((g + s) * (purity / 100) * rate);
+            var amt     = Math.round((g - s) * (purity / 100) * rate);
             grossAmtCell.textContent = amt.toFixed(2);
             updateTotals();
         }
@@ -606,7 +606,7 @@
             var g      = parseFloat(r.querySelector('[data-col="gross_wt"]').value)  || 0;
             var s      = parseFloat(r.querySelector('[data-col="stone_wax"]').value) || 0;
             var purity = parseFloat(r.querySelector('[data-col="purity"]').value)    || 0;
-            r.querySelector('[data-col="gross_amount"]').textContent = Math.round((g + s) * (purity / 100) * rate).toFixed(2);
+            r.querySelector('[data-col="gross_amount"]').textContent = Math.round((g - s) * (purity / 100) * rate).toFixed(2);
         });
         updateTotals();
     }
@@ -827,6 +827,7 @@
         payload.append('amountPaid',    parseAmt('amountPaidDisplay'));
         payload.append('billDate',      document.getElementById('billDate').value);
         payload.append('billTime',      document.getElementById('billTime').value);
+        payload.append('items',         JSON.stringify(itemsArr));
 
         var btn = document.getElementById('btnSave');
         btn.disabled = true;

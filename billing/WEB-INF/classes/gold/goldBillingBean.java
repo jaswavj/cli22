@@ -145,7 +145,7 @@ public class goldBillingBean {
             psMaster.setDouble(10, releaseAmount);
             psMaster.setDouble(11, amountPaid);
             psMaster.setString(12, billDate);
-            psMaster.setString(13, billTime + ":00");
+            psMaster.setString(13, billTime);
             psMaster.setInt(14,    userId);
             psMaster.executeUpdate();
 
@@ -209,7 +209,7 @@ public class goldBillingBean {
             psLedger.setDouble(6, closingBalance);
             psLedger.setString(7, "Gold Bill #" + billId);
             psLedger.setString(8, billDate);
-            psLedger.setString(9, billTime + ":00");
+            psLedger.setString(9, billTime);
             psLedger.setInt(10,   userId);
             psLedger.executeUpdate();
 

@@ -24,6 +24,12 @@
         } catch (Exception e) {}
         return dateStr;
     }
+
+    private boolean isClosingEntry(Vector r) {
+        String type = r.get(6) == null ? "" : r.get(6).toString();
+        String custName = r.get(4) == null ? "" : r.get(4).toString().trim();
+        return "CLOSING".equals(type) || "CLOSING BALANCE".equalsIgnoreCase(custName);
+    }
 %>
 <%
     String fromDate = request.getParameter("fromDate");
@@ -61,7 +67,7 @@
             if ("OPENING".equals(type)) {
                 totalIn += amt;
                 runningBalance += amt;
-            } else {
+            } else if (!isClosingEntry(r)) {
                 totalOut += amt;
                 runningBalance -= amt;
             }
@@ -81,8 +87,15 @@
         for (int i = 0; i < rows.size(); i++) {
             Vector r = (Vector) rows.get(i);
             String dateTime = formatDate(String.valueOf(r.get(1))) + " " + r.get(2);
-            String content = "Bill #" + (r.get(5) == null ? "-" : r.get(5)) + " - " + r.get(4);
             String type = r.get(6) == null ? "" : r.get(6).toString();
+            String content;
+            if (isClosingEntry(r)) {
+                content = "Closing Balance";
+            } else if ("OPENING".equals(type)) {
+                content = "Opening Balance";
+            } else {
+                content = "Bill #" + (r.get(5) == null ? "-" : r.get(5)) + " - " + r.get(4);
+            }
             double amt = 0;
             try { amt = Double.parseDouble(String.valueOf(r.get(8))); } catch (Exception e) {}
             
@@ -95,6 +108,8 @@
                 csvIn = String.format("%.2f", amt);
                 csvClosing = csvOpening + amt;
                 csvRunning = csvClosing;
+            } else if (isClosingEntry(r)) {
+                csvClosing = amt;
             } else {
                 csvOut = String.format("%.2f", amt);
                 csvClosing = csvOpening - amt;
@@ -229,8 +244,15 @@
                         for (int i = 0; i < rows.size(); i++) {
                             Vector r = (Vector) rows.get(i);
                             String dateTime = formatDate(String.valueOf(r.get(1))) + " " + r.get(2);
-                            String content = "Bill #" + (r.get(5) == null ? "-" : r.get(5)) + " - " + r.get(4);
                             String type = r.get(6) == null ? "" : r.get(6).toString();
+                            String content;
+                            if (isClosingEntry(r)) {
+                                content = "Closing Balance";
+                            } else if ("OPENING".equals(type)) {
+                                content = "Opening Balance";
+                            } else {
+                                content = "Bill #" + (r.get(5) == null ? "-" : r.get(5)) + " - " + r.get(4);
+                            }
                             double amt = 0;
                             try { amt = Double.parseDouble(String.valueOf(r.get(8))); } catch (Exception e) {}
                             
@@ -246,6 +268,8 @@
                                 inAmt = String.format("%.2f", amt);
                                 rowClosing = rowOpening + amt;
                                 runningBalance = rowClosing;
+                            } else if (isClosingEntry(r)) {
+                                rowClosing = amt;
                             } else {
                                 outAmt = String.format("%.2f", amt);
                                 rowClosing = rowOpening - amt;

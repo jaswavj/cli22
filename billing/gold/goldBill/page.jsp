@@ -251,6 +251,27 @@
         }
         .btn-gb-reset:hover { background: #e0e0e0; }
 
+        .btn-gb-icon {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.35);
+            border-radius: 0.5rem;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, border-color 0.15s;
+            flex-shrink: 0;
+        }
+        .btn-gb-icon:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.6);
+        }
+
         /* ─── Mobile tweaks ─── */
         @media (max-width: 768px) {
             .gold-rate-banner { gap: 10px; }
@@ -297,7 +318,12 @@
         <div class="gold-rate-banner flex-shrink-0" id="goldRateCard" style="position:relative; flex:0 0 28%; min-width:220px; flex-direction:column; align-items:flex-start; gap:10px; cursor:pointer; user-select:none;" title="Click to update gold rate">
             <div class="gr-label" style="width:100%; justify-content:space-between;">
                 <span><i class="fas fa-coins"></i> Today's Gold Rate</span>
-                <i class="fas fa-pen" style="font-size:0.75rem; color:rgba(255,255,255,0.7);"></i>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <button type="button" class="btn-gb-icon" id="btnOpeningBalanceIcon" title="Add Opening Balance" onclick="event.stopPropagation(); showOpeningBalanceModal();">
+                        <i class="fas fa-wallet"></i>
+                    </button>
+                    <i class="fas fa-pen" style="font-size:0.75rem; color:rgba(255,255,255,0.7);"></i>
+                </div>
             </div>
             <div style="display:flex; align-items:baseline; gap:6px; width:100%;">
                 <span style="color:#ffe066; font-size:1rem; font-weight:800;">₹</span>
@@ -989,6 +1015,9 @@
 
 <!-- Opening Balance Modal -->
 <jsp:include page="openingBalanceModal.jsp" />
+
+<!-- Closing Balance Modal -->
+<jsp:include page="closingBalanceModal.jsp" />
 
 <script>
 // Check opening balance on page load

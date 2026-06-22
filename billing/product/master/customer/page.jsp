@@ -52,7 +52,7 @@ String type = request.getParameter("type");
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h5 id="formCardTitle" class="mb-3">Add Customer</h5>
+                        <h5 id="formCardTitle" class="mb-3">Customer Name</h5>
                 <form id="customerForm" action="<%=contextPath%>/product/master/customer/page1.jsp" method="post" class="row g-3">
                     <div class="col-md-6 input-outline">
                         <input type="text" name="custName" id="custnameInput" class="form-control" placeholder="" required><label >Customer Name</label>
@@ -181,7 +181,7 @@ String type = request.getParameter("type");
             document.getElementById('customerId').value = '';
             document.getElementById('submitBtn').textContent = 'Add Customer';
             document.getElementById('cancelBtn').style.display = 'none';
-            document.getElementById('formCardTitle').textContent = 'Add Customer';
+            document.getElementById('formCardTitle').textContent = 'Customer Name';
             document.getElementById('gstinField').disabled = true;
             document.getElementById('gstinField').required = false;
             document.getElementById('gstinRequired').style.display = 'none';

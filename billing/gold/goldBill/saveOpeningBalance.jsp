@@ -32,23 +32,6 @@
         con = ds.getConnection();
         con.setAutoCommit(false);
         
-        // Check if opening entry already exists for today
-        ps = con.prepareStatement("SELECT COUNT(*) FROM gold_ledger WHERE txn_date = ? AND is_open_balance_entry = 1");
-        ps.setString(1, today);
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int count = rs.getInt(1);
-        rs.close();
-        ps.close();
-        
-        if (count > 0) {
-            resp.put("status", "error");
-            resp.put("message", "Opening balance already entered for today");
-            con.rollback();
-            out.print(resp.toString());
-            return;
-        }
-        
         // Insert opening balance entry - only use amount field
         ps = con.prepareStatement(
             "INSERT INTO gold_ledger " +

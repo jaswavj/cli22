@@ -306,16 +306,17 @@
     }
 
     .items-table .total-row {
-        background: #fff !important;
-        color: #111;
+        background: #102c57 !important;
+        color: #ffffff;
         font-weight: 800;
         font-size: 14px;
     }
 
     .items-table .total-row td {
-        color: #111;
+        color: #ffffff;
         padding: 8px 6px;
         border: 1px solid #777;
+        background: #102c57;
     }
 
     .items-table .gold-value {
@@ -406,14 +407,29 @@
         border-bottom: 2px solid #222;
         padding: 8px 0;
         margin-top: 6px;
+        background: linear-gradient(90deg, #111a3a 0%, #153f72 100%);
+        border-radius: 6px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        padding-left: 10px;
+        padding-right: 10px;
     }
 
     .summary-row.grand-total .summary-label {
-        font-size: 14px;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+        color: #f6d768;
+        white-space: nowrap;
     }
 
     .summary-row.grand-total .summary-value {
-        font-size: 16px;
+        font-size: 21px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        color: #ffffff;
+        font-family: 'Trebuchet MS', 'Segoe UI', Arial, sans-serif;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+        white-space: nowrap;
     }
 
     .amount-words {
@@ -510,6 +526,20 @@
 
         .print-button {
             display: none;
+        }
+
+        .summary-row.grand-total {
+            box-shadow: none;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .summary-row.grand-total .summary-value {
+            font-size: 18px;
+        }
+
+        .summary-row.grand-total .summary-label {
+            font-size: 12px;
         }
     }
 </style>

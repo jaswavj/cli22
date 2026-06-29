@@ -332,6 +332,9 @@
             <span class="gr-unit">/ gram &nbsp;|&nbsp; Click to update</span>
             <div id="lastBillNoDisplay" style="width:100%; text-align:center; padding-top:8px; margin-top:8px; border-top:1px solid rgba(255,255,255,0.2); font-size:0.8rem; color:rgba(255,255,255,0.7); display:none;">
                 Last Bill No: <span id="lastBillNo" style="font-weight:800; font-size:1rem; color:#ffe066; letter-spacing:0.5px;">-</span>
+                <div id="customerBillCountDisplay" style="margin-top:4px; font-size:0.75rem; display:none;">
+                    Customer Bill Count: <span id="customerBillCount" style="font-weight:700; color:#fff;">0</span>
+                </div>
             </div>
             <input type="hidden" id="goldRateInput" value="0">
         </div>
@@ -381,7 +384,7 @@
                 <!-- Address Proof Number -->
                 <div class="col-md-7 col-sm-6 input-outline">
                     <input type="text" id="addrProofNo" class="form-control" placeholder=" ">
-                    <label>Address Proof Number</label>
+                    <label>Address Proof</label>
                 </div>
 
             </div>
@@ -752,6 +755,34 @@
     }
     loadLatestBillNo();
 
+    function hideCustomerBillCount() {
+        document.getElementById('customerBillCountDisplay').style.display = 'none';
+        document.getElementById('customerBillCount').textContent = '0';
+    }
+
+    function loadCustomerBillCount(customerId) {
+        var cid = parseInt(customerId, 10) || 0;
+        if (cid <= 0) {
+            hideCustomerBillCount();
+            return;
+        }
+        fetch('<%= request.getContextPath() %>/gold/goldBill/getCustomerBillCount.jsp?customerId=' + cid)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.status === 'ok') {
+                    document.getElementById('customerBillCount').textContent = data.bill_count || 0;
+                    document.getElementById('customerBillCountDisplay').style.display = 'block';
+                    document.getElementById('lastBillNoDisplay').style.display = 'block';
+                } else {
+                    hideCustomerBillCount();
+                }
+            })
+            .catch(function (e) {
+                console.error('Failed to load customer bill count:', e);
+                hideCustomerBillCount();
+            });
+    }
+
     /* Allow Enter key in modal input */
     document.getElementById('goldRateModalInput').addEventListener('keydown', function (e) {
         if (e.key === 'Enter') document.getElementById('btnSetGoldRate').click();
@@ -770,10 +801,23 @@
     function validateForm() {
         var valid = true;
 
-        /* Customer name */
+        /* Customer — must be selected from existing customer list */
         var cn = document.getElementById('custName');
-        if (!cn.value.trim()) { cn.classList.add('is-invalid'); valid = false; }
-        else cn.classList.remove('is-invalid');
+        var cp = document.getElementById('custPhone');
+        var customerId = parseInt(document.getElementById('customerId').value, 10) || 0;
+        if (!cn.value.trim()) {
+            cn.classList.add('is-invalid');
+            valid = false;
+        } else {
+            cn.classList.remove('is-invalid');
+        }
+        if (customerId <= 0) {
+            cn.classList.add('is-invalid');
+            cp.classList.add('is-invalid');
+            valid = false;
+        } else {
+            cp.classList.remove('is-invalid');
+        }
 
         /* Billing rows */
         var rows = document.querySelectorAll('#billingBody tr');
@@ -793,10 +837,14 @@
         });
 
         if (!valid) {
+            var customerIdCheck = parseInt(document.getElementById('customerId').value, 10) || 0;
+            var alertText = customerIdCheck <= 0 && document.getElementById('custName').value.trim()
+                ? 'Please select an existing customer from the list. Use Customer Name or Phone Number search, or add a new customer first.'
+                : 'Please fill all required fields. Gross Amount must be greater than 0.';
             Swal.fire({
                 icon: 'warning',
-                title: 'Incomplete Entry',
-                text: 'Please fill all required fields. Gross Amount must be greater than 0.',
+                title: customerIdCheck <= 0 && document.getElementById('custName').value.trim() ? 'Customer Not Found' : 'Incomplete Entry',
+                text: alertText,
                 confirmButtonColor: '#c9a227'
             });
         }
@@ -872,6 +920,7 @@
                     document.getElementById('lastBillNo').textContent = data.bill_no;
                     document.getElementById('lastBillNoDisplay').style.display = 'block';
                 }
+                loadCustomerBillCount(document.getElementById('customerId').value);
                 Swal.fire({
                     icon: 'success',
                     title: 'Bill Saved!',
@@ -906,12 +955,11 @@
         }).then(function (result) {
             if (result.isConfirmed) {
                 document.getElementById('customerId').value = '0';
+                hideCustomerBillCount();
                 document.getElementById('custName').value   = '';
                 document.getElementById('custPhone').value  = '';
                 document.getElementById('idProofNo').value  = '';
                 document.getElementById('addrProofNo').value = '';
-                document.getElementById('goldRateInput').value = '0';
-                document.getElementById('goldRateDisplay').textContent = '0.00';
                 document.getElementById('marginInput').value = '';
                 document.getElementById('releaseInput').value = '';
                 document.getElementById('netAmountDisplay').textContent = '₹ 0';
@@ -943,6 +991,7 @@
     custNameInput.addEventListener('input', function () {
         var query = this.value.trim();
         custIdInput.value = '0';
+        hideCustomerBillCount();
         clearTimeout(custACTimeout);
         removeCustDropdown('name');
         if (query.length < 2) return;
@@ -958,6 +1007,7 @@
     custPhoneInput.addEventListener('input', function () {
         var phone = this.value.trim();
         custIdInput.value = '0';
+        hideCustomerBillCount();
         clearTimeout(custACTimeout);
         removeCustDropdown('phone');
         if (phone.length < 3) return;
@@ -998,6 +1048,7 @@
         custPhoneInput.value = (c.phone && c.phone !== '-') ? c.phone : '';
         removeCustDropdown('name');
         removeCustDropdown('phone');
+        loadCustomerBillCount(custIdInput.value);
     }
 
     function removeCustDropdown(trigger) {

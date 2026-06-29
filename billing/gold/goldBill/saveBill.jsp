@@ -25,6 +25,13 @@
         String billDate      = request.getParameter("billDate");
         String billTime      = request.getParameter("billTime");
 
+        if (customerId <= 0) {
+            resp.put("status", "error");
+            resp.put("msg", "Please select an existing customer from the list.");
+            out.print(resp.toString());
+            return;
+        }
+
         // ── Items (JSON array) ──
         String itemsJson = request.getParameter("items");
         JSONArray jItems = new JSONArray(itemsJson);

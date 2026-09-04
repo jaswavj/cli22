@@ -149,6 +149,10 @@
         .items-table { width: 100%; border-collapse: collapse; }
         .items-table th { background: #1a2540; color: white; padding: 8px; font-size: 0.75rem; text-align: left; }
         .items-table td { padding: 6px 8px; border: 1px solid #e0e0e0; font-size: 0.8rem; }
+        .modal-footer-actions { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; width:100%; }
+        .btn-cancel-bill { background:#dc2626; color:#fff; border:none; border-radius:.45rem; padding:8px 16px; font-weight:700; font-size:.82rem; }
+        .btn-cancel-bill:hover { background:#b91c1c; color:#fff; }
+        .btn-cancel-bill:disabled { opacity:.6; cursor:not-allowed; }
     </style>
 </head>
 <body>
@@ -316,14 +320,27 @@
                     </div>
                 </div>
             </div>
+            <div class="modal-footer" id="billDetailsFooter" style="display:none;">
+                <div class="modal-footer-actions">
+                    <button type="button" class="btn-cancel-bill" id="btnCancelBill" onclick="confirmCancelBill()">
+                        <i class="fa-solid fa-ban me-1"></i>Cancel Bill
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+var currentBillId = 0;
+
 function viewBillDetails(billId) {
+    currentBillId = billId;
     const modal = new bootstrap.Modal(document.getElementById('billDetailsModal'));
     const content = document.getElementById('billDetailsContent');
+    const footer = document.getElementById('billDetailsFooter');
+    footer.style.display = 'none';
     
     // Show loading
     content.innerHTML = `
@@ -342,6 +359,7 @@ function viewBillDetails(billId) {
         .then(data => {
             if (data.status === 'ok') {
                 displayBillDetails(data.bill, data.items);
+                document.getElementById('billDetailsFooter').style.display = 'flex';
             } else {
                 content.innerHTML = '<div class="alert alert-danger">Error: ' + data.message + '</div>';
             }
@@ -472,6 +490,63 @@ function displayBillDetails(bill, items) {
             </div>
         </div>
     `;
+}
+
+function confirmCancelBill() {
+    if (!currentBillId) return;
+
+    Swal.fire({
+        title: 'Cancel Bill?',
+        text: 'This will cancel the bill and reverse the ledger entry. This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, Cancel Bill',
+        cancelButtonText: 'No'
+    }).then(function (result) {
+        if (!result.isConfirmed) return;
+
+        var btn = document.getElementById('btnCancelBill');
+        btn.disabled = true;
+
+        fetch('<%= request.getContextPath() %>/gold/report/cancelBill.jsp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'billId=' + encodeURIComponent(currentBillId)
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            btn.disabled = false;
+            if (data.status === 'ok') {
+                bootstrap.Modal.getInstance(document.getElementById('billDetailsModal')).hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Bill Cancelled',
+                    text: data.msg || 'Bill cancelled and ledger adjusted.',
+                    confirmButtonColor: '#c9a227'
+                }).then(function () {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cancel Failed',
+                    text: data.msg || 'Unable to cancel bill.',
+                    confirmButtonColor: '#c9a227'
+                });
+            }
+        })
+        .catch(function (e) {
+            btn.disabled = false;
+            Swal.fire({
+                icon: 'error',
+                title: 'Network Error',
+                text: e.message,
+                confirmButtonColor: '#c9a227'
+            });
+        });
+    });
 }
 
 function formatDisplayDate(dateStr) {

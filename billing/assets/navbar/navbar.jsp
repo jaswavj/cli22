@@ -103,6 +103,8 @@ for (int i = 0; i < vecPer.size(); i++) {
     </a>
     <% } %>
 
+  
+
     <% if (permissions.contains(2)) { %>
     <a href="<%=request.getContextPath()%>/gold/report/ledgerReport.jsp" class="sidebar-item">
       <i class="fas fa-book"></i>

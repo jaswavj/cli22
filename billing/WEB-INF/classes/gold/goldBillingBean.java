@@ -292,22 +292,126 @@ public class goldBillingBean {
     }
 
     // ═══════════════════════════════════════════════════
-    // CANCEL BILL
+    // CANCEL BILL (with ledger reversal)
     // ═══════════════════════════════════════════════════
 
+    /**
+     * Cancel a gold bill and insert a reversing ledger entry (txn_type CANCEL).
+     * @return true if cancelled successfully
+     */
     public boolean cancelBill(int billId, int userId) throws Exception {
         Connection con = null;
         PreparedStatement ps = null;
+        PreparedStatement psLedger = null;
+        ResultSet rs = null;
         try {
             con = getConn();
+            con.setAutoCommit(false);
+
+            ps = con.prepareStatement(
+                "SELECT customer_id, customer_name, amount_paid, is_cancelled " +
+                "FROM gold_bill WHERE id = ? FOR UPDATE");
+            ps.setInt(1, billId);
+            rs = ps.executeQuery();
+            if (!rs.next()) {
+                con.rollback();
+                return false;
+            }
+            if (rs.getInt("is_cancelled") == 1) {
+                con.rollback();
+                throw new Exception("Bill is already cancelled.");
+            }
+
+            int customerId = rs.getInt("customer_id");
+            if (rs.wasNull()) customerId = 0;
+            String customerName = rs.getString("customer_name");
+            double amountPaid   = rs.getDouble("amount_paid");
+            rs.close();
+            rs = null;
+            ps.close();
+            ps = null;
+
             ps = con.prepareStatement(
                 "UPDATE gold_bill SET is_cancelled = 1, cancelled_by = ?, cancelled_dt = NOW() " +
                 "WHERE id = ? AND is_cancelled = 0");
             ps.setInt(1, userId);
             ps.setInt(2, billId);
-            return ps.executeUpdate() > 0;
+            if (ps.executeUpdate() <= 0) {
+                con.rollback();
+                return false;
+            }
+            ps.close();
+            ps = null;
+
+            java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            java.text.SimpleDateFormat tf = new java.text.SimpleDateFormat("HH:mm:ss");
+            java.util.Date now = new java.util.Date();
+            String today    = df.format(now);
+            String nowTime  = tf.format(now);
+
+            psLedger = con.prepareStatement(
+                "INSERT INTO gold_ledger " +
+                "(customer_id, customer_name, bill_id, txn_type, opening_balance, amount, closing_balance, " +
+                " description, txn_date, txn_time, entered_by, entered_dt, is_open_balance_entry, is_expense) " +
+                "VALUES (?, ?, ?, 'CANCEL', 0, ?, 0, ?, ?, ?, ?, NOW(), 0, 0)");
+            if (customerId > 0) psLedger.setInt(1, customerId);
+            else                psLedger.setNull(1, Types.INTEGER);
+            psLedger.setString(2, customerName);
+            psLedger.setInt(3,    billId);
+            psLedger.setDouble(4, amountPaid);
+            psLedger.setString(5, "Cancelled Gold Bill #" + billId);
+            psLedger.setString(6, today);
+            psLedger.setString(7, nowTime);
+            psLedger.setInt(8,    userId);
+            psLedger.executeUpdate();
+
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            if (con != null) try { con.rollback(); } catch (Exception ex) {}
+            throw e;
         } finally {
-            close(null, ps, con);
+            close(rs, ps, null);
+            close(null, psLedger, con);
+        }
+    }
+
+    /**
+     * Cancelled bills report filtered by cancelled_dt date range.
+     * Returns Vector of rows:
+     * [id, bill_no, bill_date, bill_time, customer_id, customer_name, customer_phone,
+     *  gross_amount, margin, net_amount, release_amount, amount_paid, cancelled_by, cancelled_dt]
+     */
+    public Vector getCancelledBillReport(String fromDate, String toDate) throws Exception {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            con = getConn();
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT id, bill_no, bill_date, bill_time, customer_id, customer_name, customer_phone, ");
+            sql.append("gold_rate, gross_amount, margin, net_amount, release_amount, amount_paid, ");
+            sql.append("cancelled_by, cancelled_dt ");
+            sql.append("FROM gold_bill WHERE is_cancelled = 1 ");
+            if (fromDate != null && !fromDate.trim().isEmpty()) sql.append("AND DATE(cancelled_dt) >= ? ");
+            if (toDate != null && !toDate.trim().isEmpty())     sql.append("AND DATE(cancelled_dt) <= ? ");
+            sql.append("ORDER BY cancelled_dt DESC, id DESC");
+
+            ps = con.prepareStatement(sql.toString());
+            int idx = 1;
+            if (fromDate != null && !fromDate.trim().isEmpty()) ps.setString(idx++, fromDate.trim());
+            if (toDate != null && !toDate.trim().isEmpty())     ps.setString(idx++, toDate.trim());
+
+            rs = ps.executeQuery();
+            Vector rows = new Vector();
+            while (rs.next()) {
+                Vector r = new Vector();
+                for (int i = 1; i <= 15; i++) r.addElement(rs.getString(i));
+                rows.addElement(r);
+            }
+            return rows;
+        } finally {
+            close(rs, ps, con);
         }
     }
 

@@ -67,6 +67,9 @@
             if ("OPENING".equals(type)) {
                 totalIn += amt;
                 runningBalance += amt;
+            } else if ("CANCEL".equals(type)) {
+                totalIn += amt;
+                runningBalance += amt;
             } else if (!isClosingEntry(r)) {
                 totalOut += amt;
                 runningBalance -= amt;
@@ -93,6 +96,8 @@
                 content = "Closing Balance";
             } else if ("OPENING".equals(type)) {
                 content = "Opening Balance";
+            } else if ("CANCEL".equals(type)) {
+                content = "Cancelled Bill #" + (r.get(5) == null ? "-" : r.get(5)) + " - " + r.get(4);
             } else {
                 content = "Bill #" + (r.get(5) == null ? "-" : r.get(5)) + " - " + r.get(4);
             }
@@ -104,7 +109,7 @@
             String csvOut = "";
             double csvClosing = 0;
             
-            if ("OPENING".equals(type)) {
+            if ("OPENING".equals(type) || "CANCEL".equals(type)) {
                 csvIn = String.format("%.2f", amt);
                 csvClosing = csvOpening + amt;
                 csvRunning = csvClosing;
@@ -250,6 +255,8 @@
                                 content = "Closing Balance";
                             } else if ("OPENING".equals(type)) {
                                 content = "Opening Balance";
+                            } else if ("CANCEL".equals(type)) {
+                                content = "Cancelled Bill #" + (r.get(5) == null ? "-" : r.get(5)) + " - " + r.get(4);
                             } else {
                                 content = "Bill #" + (r.get(5) == null ? "-" : r.get(5)) + " - " + r.get(4);
                             }
@@ -264,7 +271,7 @@
                             String outAmt = "";
                             double rowClosing = 0;
                             
-                            if ("OPENING".equals(type)) {
+                            if ("OPENING".equals(type) || "CANCEL".equals(type)) {
                                 inAmt = String.format("%.2f", amt);
                                 rowClosing = rowOpening + amt;
                                 runningBalance = rowClosing;
